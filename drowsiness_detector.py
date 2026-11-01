@@ -8,9 +8,12 @@ class DrowsinessDetector:
 
     def __init__(self):
         # ngưỡng ban đầu
-        self.ear_threshold = 0.15
         self.closed_start_time = None
         self.blink_threshold = 0.25
+        self.danger_threshold = 2.0
+        self.eye_closed_threshold = 0.15
+        self.eye_drowsy_threshold = 0.22
+
 
     def distance(self, p1, p2):
         return math.sqrt((p1.x - p2.x) ** 2 + (p1.y - p2.y) ** 2)
@@ -50,6 +53,35 @@ class DrowsinessDetector:
         average_ear = (left_ear + right_ear) / 2
 
         return average_ear
+
+    def get_eye_state(self, ear):
+        """
+        Xác định trạng thái mắt và thời gian nhắm mắt.
+
+        OPEN   : mắt mở bình thường
+        DROWSY : mắt lim dim
+        CLOSED : mắt nhắm đủ lâu để bỏ qua chớp mắt
+        """
+
+        if ear > self.eye_drowsy_threshold:
+            self.closed_start_time = None
+
+            return "OPEN", 0.0
+
+        if ear > self.eye_closed_threshold:
+            self.closed_start_time = None
+
+            return "DROWSY", 0.0
+
+        if self.closed_start_time is None:
+            self.closed_start_time = time.time()
+
+        closed_duration = time.time() - self.closed_start_time
+
+        if closed_duration < self.blink_threshold:
+            return "OPEN", closed_duration
+
+        return "CLOSED", closed_duration
 
     def is_eye_closed(self, ear):
         """Kiểm tra mắt đang nhắm hay mở"""

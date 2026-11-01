@@ -60,12 +60,12 @@ with FaceLandmarker.create_from_options(options) as landmarker:
         if result.face_landmarks:
             face = result.face_landmarks[0]
             ear = detector.get_ear(face)
-            eye_closed = detector.is_eye_closed(ear)
+            eye_state, closed_duration = detector.get_eye_state(ear)
 
             # cv2.putText(image, text, position, font, size, color, thickness)
             cv2.putText(
                 frame,
-                f"EAR: {ear: .2f}",
+                f"EAR: {ear:.2f}",
                 (20, 40),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
@@ -73,16 +73,37 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                 2
             )
 
-            if eye_closed:
+            cv2.putText(
+                frame,
+                f"EYE: {eye_state}",
+                (20, 80),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2
+            )
+
+            if eye_state == "CLOSED":
                 cv2.putText(
                     frame,
-                    "EYE CLOSED",
-                    (20, 80),
+                    f"CLOSED: {closed_duration:.1f}s",
+                    (20, 120),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1,
                     (0, 0, 255),
                     2
                 )
+
+                if closed_duration >= detector.danger_threshold:
+                    cv2.putText(
+                        frame,
+                        "DANGER! WAKE UP",
+                        (20, 160),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 255),
+                        2
+                    )
 
             for landmark in face:
                 # chuyển dạng từ 0.0 -> 1.0 sang tọa độ pixel
