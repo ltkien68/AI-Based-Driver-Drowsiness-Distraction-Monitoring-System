@@ -4,6 +4,7 @@ import time
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
+from drowsiness_detector import DrowsinessDetector
 
 MODEL_PATH = "models/face_landmarker.task"
 
@@ -30,6 +31,7 @@ if not cap.isOpened():
 
 
 start_time = time.time()
+detector = DrowsinessDetector()
 
 with FaceLandmarker.create_from_options(options) as landmarker:
     while True:
@@ -38,7 +40,7 @@ with FaceLandmarker.create_from_options(options) as landmarker:
         if not ret:
             print("Khong doc duoc hinh anh")
             break
-        # lật ảnh
+        # lật camera
         frame = cv2.flip(frame, 1)
         # openCV dùng bgr, mediapipe dùng rgb -> phải chuyển màu
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -57,6 +59,30 @@ with FaceLandmarker.create_from_options(options) as landmarker:
 
         if result.face_landmarks:
             face = result.face_landmarks[0]
+            ear = detector.get_ear(face)
+            eye_closed = detector.is_eye_closed(ear)
+
+            # cv2.putText(image, text, position, font, size, color, thickness)
+            cv2.putText(
+                frame,
+                f"EAR: {ear: .2f}",
+                (20, 40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2
+            )
+
+            if eye_closed:
+                cv2.putText(
+                    frame,
+                    "EYE CLOSED",
+                    (20, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 0, 255),
+                    2
+                )
 
             for landmark in face:
                 # chuyển dạng từ 0.0 -> 1.0 sang tọa độ pixel
@@ -72,8 +98,6 @@ with FaceLandmarker.create_from_options(options) as landmarker:
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
-
 
 cap.release()
 cv2.destroyAllWindows()
