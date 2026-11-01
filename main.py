@@ -5,6 +5,8 @@ import time
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from drowsiness_detector import DrowsinessDetector
+from distraction_detector import DistractionDetector
+from state_manager import StateManager
 
 MODEL_PATH = "models/face_landmarker.task"
 
@@ -31,7 +33,9 @@ if not cap.isOpened():
 
 
 start_time = time.time()
-detector = DrowsinessDetector()
+drowsiness_detector = DrowsinessDetector()
+distraction_detector = DistractionDetector()
+state_manager = StateManager()
 
 with FaceLandmarker.create_from_options(options) as landmarker:
     while True:
@@ -59,51 +63,57 @@ with FaceLandmarker.create_from_options(options) as landmarker:
 
         if result.face_landmarks:
             face = result.face_landmarks[0]
-            ear = detector.get_ear(face)
-            eye_state, closed_duration = detector.get_eye_state(ear)
+            ear = drowsiness_detector.get_ear(face)
+            eye_state, closed_duration = drowsiness_detector.get_eye_state(ear)
+            head_pose = distraction_detector.get_head_pose(face,frame)
 
-            # cv2.putText(image, text, position, font, size, color, thickness)
-            cv2.putText(
-                frame,
-                f"EAR: {ear:.2f}",
-                (20, 40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 255, 0),
-                2
+            eye_direction = distraction_detector.get_eye_direction(
+                face
             )
 
-            cv2.putText(
-                frame,
-                f"EYE: {eye_state}",
-                (20, 80),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 255, 0),
-                2
-            )
+            if head_pose is not None:
+                pitch, yaw, roll = head_pose
 
-            if eye_state == "CLOSED":
+                system_state = state_manager.update(
+                    eye_state,
+                    closed_duration,
+                    yaw,
+                    eye_direction
+                )
+
                 cv2.putText(
                     frame,
-                    f"CLOSED: {closed_duration:.1f}s",
-                    (20, 120),
+                    f"Yaw: {yaw:.1f}",
+                    (20, 240),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 255),
+                    0.8,
+                    (255, 255, 0),
                     2
                 )
 
-                if closed_duration >= detector.danger_threshold:
-                    cv2.putText(
-                        frame,
-                        "DANGER! WAKE UP",
-                        (20, 160),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        1,
-                        (0, 0, 255),
-                        2
-                    )
+                cv2.putText(
+                    frame,
+                    f"LOOK: {eye_direction}",
+                    (20, 280),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.8,
+                    (255, 255, 0),
+                    2
+                )
+            else:
+                system_state = state_manager.SAFE
+
+            cv2.putText(
+                frame,
+                f"STATE: {system_state}",
+                (20, 200),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2
+            )
+
+            
 
             for landmark in face:
                 # chuyển dạng từ 0.0 -> 1.0 sang tọa độ pixel
