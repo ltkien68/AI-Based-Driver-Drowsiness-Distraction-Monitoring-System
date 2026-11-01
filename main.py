@@ -28,6 +28,7 @@ if not cap.isOpened():
     print("Khong mo duoc cam")
     exit()
 
+
 start_time = time.time()
 
 with FaceLandmarker.create_from_options(options) as landmarker:
@@ -37,6 +38,8 @@ with FaceLandmarker.create_from_options(options) as landmarker:
         if not ret:
             print("Khong doc duoc hinh anh")
             break
+        # lật ảnh
+        frame = cv2.flip(frame, 1)
         # openCV dùng bgr, mediapipe dùng rgb -> phải chuyển màu
         rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         # chuyển rgb thành đối tượng Image để mediapipe có thể xử lý
