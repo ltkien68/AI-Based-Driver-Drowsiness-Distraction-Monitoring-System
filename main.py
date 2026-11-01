@@ -188,7 +188,23 @@ with FaceLandmarker.create_from_options(options) as landmarker:
             frame
         )
 
-        if cv2.waitKey(1) & 0xFF == ord("q"):
+        key = cv2.waitKey(1) & 0xFF
+
+        if key == ord("s"):
+            if head_pose is not None:
+                pitch, yaw, roll = head_pose
+
+                reset_success = state_manager.reset(
+                    yaw,
+                    eye_direction
+                )
+
+                if reset_success:
+                    print("Reset thanh cong - SAFE")
+                else:
+                    print("Reset that bai - Hay nhin thang vao camera")
+
+        if key == ord("q"):
             break
 
 cap.release()

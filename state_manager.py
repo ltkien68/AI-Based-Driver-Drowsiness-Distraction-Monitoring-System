@@ -97,14 +97,25 @@ class StateManager:
 
         return self.current_state
 
-    def reset(self):
+    def reset(self, yaw, eye_direction):
         """
-        Reset trạng thái DANGER.
+        Reset DANGER khi tài xế nhìn thẳng và nhấn nút reset.
 
-        Sau này sẽ được gọi khi:
-        - Tài xế nhìn thẳng
-        - Nhấn nút RESET trên Arduino
+        Điều kiện:
+        - Đầu nhìn gần hướng thẳng
+        - Mắt nhìn CENTER
         """
 
-        self.current_state = self.SAFE
-        self.distraction_start_time = None
+        yaw_deviation = abs(yaw - self.center_yaw)
+
+        looking_forward = (
+            yaw_deviation <= self.yaw_threshold
+            and eye_direction == "CENTER"
+        )
+
+        if looking_forward:
+            self.current_state = self.SAFE
+            self.distraction_start_time = None
+            return True
+
+        return False
