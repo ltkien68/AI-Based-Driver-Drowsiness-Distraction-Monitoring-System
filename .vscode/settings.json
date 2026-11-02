@@ -8,5 +8,6 @@
     "Rodrigues",
     "SOLVEPNP",
     "SRGB"
-  ]
+  ],
+  "python-envs.defaultEnvManager": "ms-python.python:system"
 }
