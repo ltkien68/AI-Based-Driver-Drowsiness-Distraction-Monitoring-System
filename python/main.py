@@ -1,6 +1,7 @@
 import cv2
 import mediapipe as mp
 import time
+import serial
 
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
@@ -35,6 +36,17 @@ if not cap.isOpened():
     exit()
 
 
+# Kết nối ESP32
+esp32 = serial.Serial(
+    "COM3",
+    115200,
+    timeout=0.01
+)
+
+# Xóa dữ liệu rác trong buffer khi ESP32 vừa kết nối
+esp32.reset_input_buffer()
+
+
 # Khởi tạo hệ thống
 start_time = time.time()
 
@@ -42,10 +54,25 @@ drowsiness_detector = DrowsinessDetector()
 distraction_detector = DistractionDetector()
 state_manager = StateManager()
 
+# Lưu yêu cầu reset từ button ESP32
+reset_requested = False
+
 
 with FaceLandmarker.create_from_options(options) as landmarker:
 
     while True:
+
+        # Đọc tín hiệu từ ESP32
+        if esp32.in_waiting > 0:
+            tin_hieu = esp32.readline().decode(
+                "utf-8",
+                errors="ignore"
+            ).strip()
+
+            if tin_hieu == "S":
+                reset_requested = True
+                print("Nhan nut RESET tu ESP32")
+
         ret, frame = cap.read()
 
         if not ret:
@@ -77,12 +104,22 @@ with FaceLandmarker.create_from_options(options) as landmarker:
         )
 
         if result.face_landmarks:
+
             face = result.face_landmarks[0]
+
+            # =========================
+            # PHÁT HIỆN BUỒN NGỦ
+            # =========================
+
             ear = drowsiness_detector.get_ear(face)
-            
+
             eye_state, closed_duration = (
                 drowsiness_detector.get_eye_state(ear)
             )
+
+            # =========================
+            # PHÁT HIỆN MẤT TẬP TRUNG
+            # =========================
 
             head_pose = distraction_detector.get_head_pose(
                 face,
@@ -94,7 +131,12 @@ with FaceLandmarker.create_from_options(options) as landmarker:
             )
 
             if head_pose is not None:
+
                 pitch, yaw, roll = head_pose
+
+                # =========================
+                # CẬP NHẬT TRẠNG THÁI
+                # =========================
 
                 system_state = state_manager.update(
                     eye_state,
@@ -103,6 +145,37 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                     eye_direction
                 )
 
+                # =========================
+                # RESET DANGER BẰNG BUTTON
+                # =========================
+
+                if reset_requested:
+
+                    if system_state == state_manager.DANGER:
+
+                        reset_success = state_manager.reset(
+                            yaw,
+                            eye_direction
+                        )
+
+                        if reset_success:
+                            print(
+                                "Reset thanh cong - SAFE"
+                            )
+                        else:
+                            print(
+                                "Reset that bai - Hay nhin thang vao camera"
+                            )
+
+                    else:
+                        print(
+                            "Khong can reset - He thong khong o DANGER"
+                        )
+
+                    # Xử lý xong yêu cầu reset
+                    reset_requested = False
+
+                # Hiển thị Yaw
                 cv2.putText(
                     frame,
                     f"Yaw: {yaw:.1f}",
@@ -127,15 +200,25 @@ with FaceLandmarker.create_from_options(options) as landmarker:
             else:
                 system_state = state_manager.SAFE
 
+                # Không có head pose → bỏ yêu cầu reset
+                reset_requested = False
+
+            # =========================
+            # HIỂN THỊ TRẠNG THÁI
+            # =========================
+
             if system_state == state_manager.SAFE:
+
                 state_text = "SAFE"
                 state_color = (0, 255, 0)
 
             elif system_state == state_manager.FOCUS:
+
                 state_text = "FOCUS"
                 state_color = (0, 255, 255)
 
             else:
+
                 state_text = "DANGER"
                 state_color = (0, 0, 255)
 
@@ -149,7 +232,9 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                 2
             )
 
+            # Hiển thị cảnh báo DANGER
             if system_state == state_manager.DANGER:
+
                 cv2.putText(
                     frame,
                     "DANGER! WAKE UP",
@@ -160,9 +245,16 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                     2
                 )
 
+            # Vẽ toàn bộ landmark khuôn mặt
             for landmark in face:
-                x = int(landmark.x * frame.shape[1])
-                y = int(landmark.y * frame.shape[0])
+
+                x = int(
+                    landmark.x * frame.shape[1]
+                )
+
+                y = int(
+                    landmark.y * frame.shape[0]
+                )
 
                 cv2.circle(
                     frame,
@@ -173,6 +265,7 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                 )
 
         else:
+
             cv2.putText(
                 frame,
                 "NO FACE DETECTED",
@@ -183,6 +276,7 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                 2
             )
 
+        # Hiển thị camera
         cv2.imshow(
             "KSafe AI - Camera",
             frame
@@ -190,22 +284,11 @@ with FaceLandmarker.create_from_options(options) as landmarker:
 
         key = cv2.waitKey(1) & 0xFF
 
-        if key == ord("s"):
-            if head_pose is not None:
-                pitch, yaw, roll = head_pose
-
-                reset_success = state_manager.reset(
-                    yaw,
-                    eye_direction
-                )
-
-                if reset_success:
-                    print("Reset thanh cong - SAFE")
-                else:
-                    print("Reset that bai - Hay nhin thang vao camera")
-
+        # Nhấn Q để thoát
         if key == ord("q"):
             break
 
+
 cap.release()
+esp32.close()
 cv2.destroyAllWindows()
