@@ -36,15 +36,15 @@ if not cap.isOpened():
     exit()
 
 
-# Kết nối ESP32
-esp32 = serial.Serial(
-    "COM3",
-    115200,
+# Kết nối ARDUINO
+arduino = serial.Serial(
+    "COM7",
+    9600,
     timeout=0.01
 )
 
-# Xóa dữ liệu rác trong buffer khi ESP32 vừa kết nối
-esp32.reset_input_buffer()
+# Xóa dữ liệu rác trong buffer khi ARDUINO vừa kết nối
+arduino.reset_input_buffer()
 
 
 # Khởi tạo hệ thống
@@ -54,8 +54,9 @@ drowsiness_detector = DrowsinessDetector()
 distraction_detector = DistractionDetector()
 state_manager = StateManager()
 
-# Lưu yêu cầu reset từ button ESP32
+# Lưu yêu cầu reset từ button arduino
 reset_requested = False
+last_sent_state = None
 
 
 with FaceLandmarker.create_from_options(options) as landmarker:
@@ -63,15 +64,15 @@ with FaceLandmarker.create_from_options(options) as landmarker:
     while True:
 
         # Đọc tín hiệu từ ESP32
-        if esp32.in_waiting > 0:
-            tin_hieu = esp32.readline().decode(
+        if arduino.in_waiting > 0:
+            tin_hieu = arduino.readline().decode(
                 "utf-8",
                 errors="ignore"
             ).strip()
 
-            if tin_hieu == "S":
+            if tin_hieu == "R":
                 reset_requested = True
-                print("Nhan nut RESET tu ESP32")
+                print("Nhan nut RESET tu arduino")
 
         ret, frame = cap.read()
 
@@ -222,6 +223,25 @@ with FaceLandmarker.create_from_options(options) as landmarker:
                 state_text = "DANGER"
                 state_color = (0, 0, 255)
 
+            # =========================
+            # GỬI TRẠNG THÁI XUỐNG ARDUINO
+            # =========================
+
+            if system_state == state_manager.SAFE:
+                arduino_state = "S"
+
+            elif system_state == state_manager.FOCUS:
+                arduino_state = "F"
+
+            else:
+                arduino_state = "D"
+
+            if arduino_state != last_sent_state:
+                arduino.write((arduino_state + "\n").encode())
+                last_sent_state = arduino_state
+
+                print(f"Gui Arduino: {arduino_state}")
+
             cv2.putText(
                 frame,
                 f"STATE: {state_text}",
@@ -290,5 +310,5 @@ with FaceLandmarker.create_from_options(options) as landmarker:
 
 
 cap.release()
-esp32.close()
+arduino.close()
 cv2.destroyAllWindows()
