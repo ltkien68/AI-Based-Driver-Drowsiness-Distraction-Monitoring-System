@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f172a">
+  <title>KSafe AI | Overview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/variables.css">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="assets/css/responsive.css">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-page="overview">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="index.html">
+        <span class="brand-mark"><i data-lucide="shield-check"></i></span>
+        <span><strong>KSafe<span> AI</span></strong><small>DRIVER SAFETY SYSTEM</small></span>
+      </a>
+      <div class="side-label">WORKSPACE</div>
+      <nav class="nav-list">
+        <a class="nav-link active" href="index.html"><i data-lucide="layout-dashboard"></i><span>Overview</span></a>
+        <a class="nav-link" href="pages/monitoring.html"><i data-lucide="scan-eye"></i><span>Live Monitoring</span><span class="live-dot"></span></a>
+        <a class="nav-link" href="pages/devices.html"><i data-lucide="cpu"></i><span>Device Management</span></a>
+        <a class="nav-link" href="pages/alerts.html"><i data-lucide="bell"></i><span>Alert History</span></a>
+        <a class="nav-link" href="pages/analytics.html"><i data-lucide="chart-no-axes-combined"></i><span>Analytics</span></a>
+      </nav>
+      <div class="side-label side-label-bottom">PREFERENCES</div>
+      <nav class="nav-list">
+        <a class="nav-link" href="pages/settings.html"><i data-lucide="settings-2"></i><span>Settings</span></a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="connection-panel">
+        <div class="connection-title"><span class="status-dot offline" id="sidebarEspDot"></span> DEVICE CONNECTION</div>
+        <div class="connection-row"><span>ESP32</span><b id="sidebarEspStatus">Demo mode</b></div>
+        <div class="connection-row"><span>Python AI</span><b class="muted">Demo mode</b></div>
+        <div class="connection-foot">Local monitoring environment</div>
+      </div>
+      <div class="sidebar-version">KSafe AI <span>v1.0.0</span></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="icon-button menu-toggle" id="menuToggle" aria-label="Open menu"><i data-lucide="menu"></i></button>
+        <div class="breadcrumbs"><span>Workspace</span><i data-lucide="chevron-right"></i><strong id="pageTitle">Overview</strong></div>
+        <div class="topbar-actions">
+          <span class="environment-pill"><span class="status-dot"></span> LOCAL ENVIRONMENT</span>
+          <div class="topbar-divider"></div>
+          <div class="clock-block"><span id="currentDate">--</span><strong id="currentTime">--:--:--</strong></div>
+          <div class="avatar">KS</div>
+        </div>
+      </header>
+
+      <section class="page-content">
+        <div class="page-heading">
+          <div><div class="eyebrow">SYSTEM OVERVIEW</div><h1>Driver Safety Dashboard</h1><p>Monitor AI detection, driver condition and connected IoT devices.</p></div>
+          <div class="heading-actions"><span class="demo-badge"><i data-lucide="flask-conical"></i> DEMO DATA</span><button class="button button-secondary" id="refreshButton"><i data-lucide="refresh-cw"></i> Refresh</button></div>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card"><div class="metric-top"><span>AI MONITORING</span><span class="metric-icon blue"><i data-lucide="scan-face"></i></span></div><div class="metric-value" id="aiStatus">DEMO</div><div class="metric-foot"><span class="status-dot demo-dot"></span> MediaPipe · Waiting for connection</div></article>
+          <article class="metric-card"><div class="metric-top"><span>ESP32 DEVICE</span><span class="metric-icon violet"><i data-lucide="cpu"></i></span></div><div class="metric-value" id="espStatus">OFFLINE</div><div class="metric-foot"><span class="status-dot offline" id="espDot"></span><span id="espIp">IP not configured</span></div></article>
+          <article class="metric-card"><div class="metric-top"><span>DRIVER STATUS</span><span class="metric-icon green" id="driverIcon"><i data-lucide="shield-check"></i></span></div><div class="metric-value state-safe" id="driverState">SAFE</div><div class="metric-foot" id="driverDescription">No risk detected · Demo state</div></article>
+          <article class="metric-card"><div class="metric-top"><span>SESSION ALERTS</span><span class="metric-icon amber"><i data-lucide="bell-ring"></i></span></div><div class="metric-value" id="alertCount">03</div><div class="metric-foot">Alerts recorded in this session</div></article>
+        </div>
+
+        <div class="section-heading"><div><h2>Live monitoring</h2><p>Camera preview and real-time AI indicators</p></div><a class="text-link" href="pages/monitoring.html">Open monitoring <i data-lucide="arrow-up-right"></i></a></div>
+        <div class="monitor-grid">
+          <article class="panel camera-panel">
+            <div class="panel-header"><div><h3>Driver camera</h3><span class="subtle">Primary camera feed</span></div><div class="camera-meta"><span class="live-label"><span></span> LIVE</span><span class="fps-label">-- FPS</span></div></div>
+            <div class="camera-placeholder"><div class="camera-frame"><i data-lucide="camera"></i><strong>Camera feed unavailable</strong><span>Connect the Python AI service to display live video.</span></div><div class="camera-corner corner-tl"></div><div class="camera-corner corner-tr"></div><div class="camera-corner corner-bl"></div><div class="camera-corner corner-br"></div><span class="camera-overlay-label">CAM 01 · DRIVER MONITORING</span></div>
+            <div class="camera-footer"><span><i data-lucide="scan-face"></i> Face detection <b class="muted">Waiting</b></span><span><i data-lucide="activity"></i> Stream <b class="muted">Not connected</b></span></div>
+          </article>
+          <article class="panel ai-panel">
+            <div class="panel-header"><div><h3>AI perception</h3><span class="subtle">Detection measurements</span></div><span class="mini-chip">PYTHON ENGINE</span></div>
+            <div class="measure-list">
+              <div class="measure-row"><div><span>Eye Aspect Ratio</span><small>EAR</small></div><strong id="earValue">0.28</strong><span class="measure-track"><i style="width:58%"></i></span></div>
+              <div class="measure-row"><div><span>Head Pitch</span><small>Vertical angle</small></div><strong id="pitchValue">2.4°</strong><span class="measure-tag">NORMAL</span></div>
+              <div class="measure-row"><div><span>Head Yaw</span><small>Horizontal angle</small></div><strong id="yawValue">-1.8°</strong><span class="measure-tag">NORMAL</span></div>
+              <div class="measure-row"><div><span>Head Roll</span><small>Tilt angle</small></div><strong id="rollValue">0.6°</strong><span class="measure-tag">NORMAL</span></div>
+              <div class="measure-row"><div><span>Eye direction</span><small>Gaze estimation</small></div><strong class="measure-text" id="gazeValue">CENTER</strong><span class="measure-tag">NORMAL</span></div>
+            </div>
+            <div class="perception-footer"><span class="status-dot demo-dot"></span> Sample values · Not live sensor data</div>
+          </article>
+        </div>
+
+        <div class="section-heading status-heading"><div><h2>Driver safety status</h2><p>Current system decision</p></div></div>
+        <article class="safety-banner safe-banner" id="safetyBanner"><div class="safety-symbol"><i data-lucide="shield-check"></i></div><div class="safety-copy"><span class="eyebrow">CURRENT CONDITION</span><h2 id="safetyTitle">Driver is Safe</h2><p id="safetyText">No drowsiness or distraction indicators detected.</p></div><div class="safety-state" id="safetyState">SAFE</div></article>
+
+        <div class="section-heading"><div><h2>Device monitoring</h2><p>Peripheral status reported by ESP32</p></div><a class="text-link" href="pages/devices.html">Manage devices <i data-lucide="arrow-up-right"></i></a></div>
+        <div class="device-grid">
+          <article class="device-card"><span class="device-icon"><i data-lucide="lightbulb"></i></span><div><strong>RGB LED</strong><small id="ledStatus">Green · Demo</small></div><span class="device-state demo-state">DEMO</span></article>
+          <article class="device-card"><span class="device-icon"><i data-lucide="volume-2"></i></span><div><strong>Buzzer</strong><small id="buzzerStatus">Off · Demo</small></div><span class="device-state">OFF</span></article>
+          <article class="device-card"><span class="device-icon"><i data-lucide="monitor"></i></span><div><strong>OLED / LCD</strong><small>Display module</small></div><span class="device-state demo-state">DEMO</span></article>
+          <article class="device-card"><span class="device-icon"><i data-lucide="wifi"></i></span><div><strong>Wi-Fi</strong><small id="wifiStatus">Not connected</small></div><span class="device-state">OFFLINE</span></article>
+          <article class="device-card"><span class="device-icon"><i data-lucide="toggle-right"></i></span><div><strong>Reset button</strong><small>Input monitoring</small></div><span class="device-state demo-state">DEMO</span></article>
+        </div>
+
+        <div class="section-heading"><div><h2>Recent alerts</h2><p>Latest events from the monitoring session</p></div><a class="text-link" href="pages/alerts.html">View all alerts <i data-lucide="arrow-up-right"></i></a></div>
+        <article class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>TIME</th><th>EVENT</th><th>SEVERITY</th><th>STATUS</th></tr></thead><tbody id="recentAlerts">
+          <tr><td>14:30:05</td><td><span class="event-name"><i data-lucide="shield-check"></i> Driver Safe</span></td><td><span class="severity normal">Normal</span></td><td><span class="resolved">Resolved</span></td></tr>
+          <tr><td>14:29:42</td><td><span class="event-name"><i data-lucide="eye"></i> Eye Closure</span></td><td><span class="severity warning">Warning</span></td><td><span class="detected">Detected</span></td></tr>
+          <tr><td>14:28:16</td><td><span class="event-name"><i data-lucide="alert-triangle"></i> Drowsiness</span></td><td><span class="severity critical">Critical</span></td><td><span class="detected">Detected</span></td></tr>
+          <tr><td>14:25:10</td><td><span class="event-name"><i data-lucide="scan-eye"></i> Distraction</span></td><td><span class="severity warning">Warning</span></td><td><span class="resolved">Resolved</span></td></tr>
+        </tbody></table></div></article>
+        <footer class="page-footer"><span>© 2026 KSafe AI · Driver Monitoring System</span><span>Frontend prototype <b>v1.0.0</b></span></footer>
+      </section>
+    </main>
+  </div>
+  <div class="toast" id="toast"></div>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/dashboard.js"></script>
+</body>
+</html>
