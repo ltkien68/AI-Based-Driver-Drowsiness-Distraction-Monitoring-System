@@ -121,7 +121,8 @@ void layTrangThai() {
     json += trangThaiHienTai;
     json += "\",";
 
-    json += "\"wifi\":true,";
+    json += "\"wifi\":";
+    json += (WiFi.status() == WL_CONNECTED) ? "true," : "false,";
 
     json += "\"resetRequested\":";
     json += yeuCauReset ? "true" : "false";

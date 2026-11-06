@@ -1,24 +1,31 @@
 # KSafe AI Dashboard
 
-Frontend prototype for the KSafe AI driver monitoring system.
+Giao dien Dashboard HTML, CSS va JavaScript thuần.
 
-## Run locally
-Open this folder in VS Code and use the Live Server extension on `index.html`, or run a local static server:
+## Chay local
 
-```bash
-python -m http.server 5500
-```
+Mo thu muc `web` bang VS Code, cai extension Live Server, sau do mo `index.html` bang Live Server.
 
-Then open `http://localhost:5500`.
+## Ket noi ESP32
 
-## Demo vs real data
-The UI starts in DEMO mode. It does not claim the ESP32 or Python AI is connected unless a real request to the configured ESP32 API succeeds.
+1. Nap firmware ESP32 co cac API:
+   - `GET /api/status`
+   - `POST /api/state` voi JSON `{"state":"S"}`, `{"state":"F"}` hoac `{"state":"D"}`
+   - `POST /api/reset/ack`
+2. Ket noi may tinh va ESP32 vao cung mang Wi-Fi.
+3. Mo trang Settings, nhap dia chi ESP32, vi du `http://192.168.1.123`.
+4. Chon **Test connection**. Khi API tra ve JSON hop le, Dashboard moi bao da ket noi.
+5. Trang Overview tu dong doc `/api/status` moi 2.5 giay.
 
-Configure the ESP32 base URL in Settings. The ESP32 should expose:
-- `GET /api/status`
-- `POST /api/state`
+## Luong du lieu
 
-## Notes
-- HTML, CSS and vanilla JavaScript only.
-- Lucide icons and Google Fonts are loaded from CDNs.
-- Browser-to-ESP32 requests require correct CORS response headers on the ESP32.
+- Python AI la ben quyet dinh trang thai SAFE / FOCUS / DANGER va gui `POST /api/state` den ESP32.
+- ESP32 dieu khien LED, buzzer, LCD/OLED va tra trang thai hien tai cho Web.
+- Web chi doc trang thai tu ESP32; khong tu gia lap trang thai AI khi ESP32 offline.
+- Nut reset tren ESP32 tao `resetRequested=true`. Python can doc co nay, tu xac minh dieu kien an toan, sau do moi gui `POST /api/reset/ack`.
+
+## Luu y
+
+- Dia chi IP trong Settings duoc luu trong localStorage cua trinh duyet.
+- Neu trinh duyet bao loi CORS, kiem tra ESP32 da xu ly OPTIONS va gui cac header `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`.
+- Day la frontend local; chua co Node.js backend, database, camera stream hoac ket noi WebSocket.
