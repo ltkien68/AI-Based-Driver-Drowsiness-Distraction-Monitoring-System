@@ -15,6 +15,7 @@ class LCD {
 private:
     LiquidCrystal_I2C lcd;
     Adafruit_SSD1306 oled;
+    char trangThaiOLED;
 
     bool coLCD;
     bool coOLED;

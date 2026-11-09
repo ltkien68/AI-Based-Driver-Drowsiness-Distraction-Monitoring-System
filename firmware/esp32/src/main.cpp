@@ -18,8 +18,8 @@
 #define BUTTON_PIN 13
 
 // ================= WIFI =================
-const char* WIFI_SSID = "TEN_WIFI";
-const char* WIFI_PASSWORD = "MAT_KHAU_WIFI";
+const char* WIFI_SSID = "新年快乐";
+const char* WIFI_PASSWORD = "xinniankuaile";
 
 // ================= OBJECT =================
 

@@ -1,12 +1,12 @@
 
 #include "../../include/devices/lcd.h"
 
-#define EYE_WIDTH 42
-#define EYE_HEIGHT 38
+#define EYE_WIDTH 34
+#define EYE_HEIGHT 28
 
-#define LEFT_EYE_X 17
-#define RIGHT_EYE_X 69
-#define EYE_Y 13
+#define LEFT_EYE_X 22
+#define RIGHT_EYE_X 72
+#define EYE_Y 4
 
 LCD::LCD(uint8_t diaChi, uint8_t soCot, uint8_t soDong)
     : lcd(diaChi, soCot, soDong),
@@ -25,6 +25,8 @@ LCD::LCD(uint8_t diaChi, uint8_t soCot, uint8_t soDong)
     lanCapNhatMat = 0;
     lanCapNhatHuong = 0;
     thoiGianChopTiepTheo = 0;
+
+    trangThaiOLED = 'S';
 }
 
 bool LCD::kiemTraI2C(uint8_t diaChi) {
@@ -46,16 +48,10 @@ void LCD::begin() {
 
     // Khoi tao OLED
     if (kiemTraI2C(0x3C)) {
-        coOLED = oled.begin(
-            SSD1306_SWITCHCAPVCC,
-            0x3C
-        );
+        coOLED = oled.begin(SSD1306_SWITCHCAPVCC, 0x3C);
     }
     else if (kiemTraI2C(0x3D)) {
-        coOLED = oled.begin(
-            SSD1306_SWITCHCAPVCC,
-            0x3D
-        );
+        coOLED = oled.begin(SSD1306_SWITCHCAPVCC, 0x3D);
     }
 
     // Khoi tao animation
@@ -71,8 +67,7 @@ void LCD::begin() {
     hienThiTrangThai('S');
 }
 
-
-
+// Ve mot mat robot
 void LCD::veMat(
     int x,
     int y,
@@ -81,9 +76,9 @@ void LCD::veMat(
     int eyeHeight
 ) {
     int viTriY = y + (EYE_HEIGHT - eyeHeight) / 2;
-    int banKinh = min(12, eyeHeight / 2);
+    int banKinh = min(9, eyeHeight / 2);
 
-    // Ve mat trang, khong co dong tu
+    // Ve mat trang voi hinh dang bo tron
     oled.fillRoundRect(
         x,
         viTriY,
@@ -94,7 +89,7 @@ void LCD::veMat(
     );
 }
 
-
+// Ve hai mat va trang thai
 void LCD::veHaiMat(
     int offsetX,
     int offsetY,
@@ -102,6 +97,7 @@ void LCD::veHaiMat(
 ) {
     oled.clearDisplay();
 
+    // Ve mat trai
     veMat(
         LEFT_EYE_X,
         EYE_Y,
@@ -110,6 +106,7 @@ void LCD::veHaiMat(
         eyeHeight
     );
 
+    // Ve mat phai
     veMat(
         RIGHT_EYE_X,
         EYE_Y,
@@ -118,12 +115,47 @@ void LCD::veHaiMat(
         eyeHeight
     );
 
+    // Hien thi trang thai ben duoi mat
+    oled.setTextSize(1);
+    oled.setTextColor(SSD1306_WHITE);
+    oled.setTextWrap(false);
+
+    const char* noiDung;
+
+    if (trangThaiOLED == 'S') {
+        noiDung = "SAFE";
+    }
+    else if (trangThaiOLED == 'F') {
+        noiDung = "FOCUS!";
+    }
+    else {
+        noiDung = "DANGER!!";
+    }
+
+    // Can giua dong trang thai
+    int chieuRong = strlen(noiDung) * 6;
+    int viTriX = (OLED_WIDTH - chieuRong) / 2;
+
+    oled.setCursor(viTriX, 42);
+    oled.print(noiDung);
+
     oled.display();
 }
 
 void LCD::hienThiTrangThai(char trangThai) {
+
+    trangThaiOLED = trangThai;
+
     if (coLCD) {
         hienThiLCD(trangThai);
+    }
+
+    if (coOLED) {
+        veHaiMat(
+            pupilOffsetX,
+            0,
+            eyeHeight
+        );
     }
 }
 
@@ -187,6 +219,7 @@ void LCD::capNhatOLED() {
         }
     }
 
+    // Bat dau chop mat
     if (!dangChopMat &&
         hienTai >= thoiGianChopTiepTheo) {
 
@@ -196,6 +229,7 @@ void LCD::capNhatOLED() {
         lanCapNhatMat = hienTai;
     }
 
+    // Cap nhat animation chop mat
     if (dangChopMat &&
         hienTai - lanCapNhatMat >= 18) {
 
@@ -232,6 +266,7 @@ void LCD::capNhatOLED() {
         canVeLai = true;
     }
 
+    // Ve lai OLED khi co thay doi
     if (canVeLai) {
         veHaiMat(
             pupilOffsetX,

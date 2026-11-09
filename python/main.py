@@ -8,12 +8,17 @@ from mediapipe.tasks.python import vision
 from drowsiness_detector import DrowsinessDetector
 from distraction_detector import DistractionDetector
 from state_manager import StateManager
+from mqtt_client import KSafeMQTTClient
 
 
 MODEL_PATH = "models/face_landmarker.task"
 
+# Chu ky gui du lieu MQTT
+HEARTBEAT_INTERVAL = 5.0
+METRICS_INTERVAL = 1.0
 
-# Cấu hình MediaPipe Face Landmarker
+
+# Cau hinh MediaPipe Face Landmarker
 BaseOptions = python.BaseOptions
 FaceLandmarker = vision.FaceLandmarker
 FaceLandmarkerOptions = vision.FaceLandmarkerOptions
@@ -28,287 +33,394 @@ options = FaceLandmarkerOptions(
 )
 
 
-# Mở camera
+# Mo camera
 cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("Khong mo duoc camera")
     exit()
 
-
-# Kết nối ARDUINO
+# Ket noi ARDUINO
 arduino = serial.Serial(
     "COM9",
     9600,
     timeout=0.01
 )
 
-# Xóa dữ liệu rác trong buffer khi ARDUINO vừa kết nối
+# Xoa du lieu rac trong buffer khi ARDUINO vua ket noi
 arduino.reset_input_buffer()
 
+# Khoi tao MQTT Client
+mqtt_client = KSafeMQTTClient()
+mqtt_client.connect()
 
-# Khởi tạo hệ thống
+# Khoi tao he thong AI
 start_time = time.time()
 
 drowsiness_detector = DrowsinessDetector()
 distraction_detector = DistractionDetector()
 state_manager = StateManager()
 
-# Lưu yêu cầu reset từ button arduino
+# Bien quan ly trang thai
 reset_requested = False
 last_sent_state = None
+last_mqtt_state = None
 
+# Bien quan ly thoi gian gui MQTT
+last_heartbeat_time = 0
+last_metrics_time = 0
 
-with FaceLandmarker.create_from_options(options) as landmarker:
+try:
+    with FaceLandmarker.create_from_options(options) as landmarker:
+        while True:
 
-    while True:
+            # ==================================
+            # NHAN TIN HIEU RESET TU ARDUINO
+            # ==================================
 
-        # Đọc tín hiệu từ ESP32
-        if arduino.in_waiting > 0:
-            tin_hieu = arduino.readline().decode(
-                "utf-8",
-                errors="ignore"
-            ).strip()
+            if arduino.in_waiting > 0:
+                tin_hieu = arduino.readline().decode(
+                    "utf-8",
+                    errors="ignore"
+                ).strip()
 
-            if tin_hieu == "R":
-                reset_requested = True
-                print("Nhan nut RESET tu arduino")
+                if tin_hieu == "R":
+                    reset_requested = True
+                    print("Nhan nut RESET tu arduino")
 
-        ret, frame = cap.read()
+            # ==================================
+            # DOC CAMERA
+            # ==================================
 
-        if not ret:
-            print("Khong doc duoc hinh anh")
-            break
+            ret, frame = cap.read()
 
-        # Lật camera giống camera selfie
-        frame = cv2.flip(frame, 1)
+            if not ret:
+                print("Khong doc duoc hinh anh")
+                break
 
-        # OpenCV dùng BGR, MediaPipe dùng RGB
-        rgb_frame = cv2.cvtColor(
-            frame,
-            cv2.COLOR_BGR2RGB
-        )
+            frame = cv2.flip(frame, 1)
 
-        # Chuyển frame thành MediaPipe Image
-        mp_image = mp.Image(
-            image_format=mp.ImageFormat.SRGB,
-            data=rgb_frame
-        )
+            # ==================================
+            # HEARTBEAT MQTT
+            # ==================================
 
-        timestamp_ms = int(
-            (time.time() - start_time) * 1000
-        )
+            current_time = time.monotonic()
 
-        result = landmarker.detect_for_video(
-            mp_image,
-            timestamp_ms
-        )
+            if current_time - last_heartbeat_time >= HEARTBEAT_INTERVAL:
 
-        if result.face_landmarks:
+                mqtt_client.publish_heartbeat()
 
-            face = result.face_landmarks[0]
+                last_heartbeat_time = current_time
 
-            # =========================
-            # PHÁT HIỆN BUỒN NGỦ
-            # =========================
+            # Neu mat ket noi, cho phep gui lai state sau reconnect
+            if not mqtt_client.da_ket_noi:
+                last_mqtt_state = None
 
-            ear = drowsiness_detector.get_ear(face)
+            # ==================================
+            # XU LY HINH ANH
+            # ==================================
 
-            eye_state, closed_duration = (
-                drowsiness_detector.get_eye_state(ear)
+            rgb_frame = cv2.cvtColor(
+                frame,
+                cv2.COLOR_BGR2RGB
             )
 
-            # =========================
-            # PHÁT HIỆN MẤT TẬP TRUNG
-            # =========================
-
-            head_pose = distraction_detector.get_head_pose(
-                face,
-                frame
+            mp_image = mp.Image(
+                image_format=mp.ImageFormat.SRGB,
+                data=rgb_frame
             )
 
-            eye_direction = (
-                distraction_detector.get_eye_direction(face)
+            timestamp_ms = int(
+                (time.time() - start_time) * 1000
             )
 
-            if head_pose is not None:
+            result = landmarker.detect_for_video(
+                mp_image,
+                timestamp_ms
+            )
 
-                pitch, yaw, roll = head_pose
+            if result.face_landmarks:
+
+                face = result.face_landmarks[0]
 
                 # =========================
-                # CẬP NHẬT TRẠNG THÁI
+                # PHAT HIEN BUON NGU
                 # =========================
 
-                system_state = state_manager.update(
-                    eye_state,
-                    closed_duration,
-                    yaw,
-                    eye_direction
+                ear = drowsiness_detector.get_ear(face)
+
+                eye_state, closed_duration = (
+                    drowsiness_detector.get_eye_state(ear)
                 )
 
                 # =========================
-                # RESET DANGER BẰNG BUTTON
+                # PHAT HIEN MAT TAP TRUNG
                 # =========================
 
-                if reset_requested:
+                head_pose = distraction_detector.get_head_pose(
+                    face,
+                    frame
+                )
 
-                    if system_state == state_manager.DANGER:
+                eye_direction = (
+                    distraction_detector.get_eye_direction(face)
+                )
 
-                        reset_success = state_manager.reset(
-                            yaw,
-                            eye_direction
-                        )
+                if head_pose is not None:
 
-                        if reset_success:
-                            print(
-                                "Reset thanh cong - SAFE"
+                    pitch, yaw, roll = head_pose
+
+                    # =========================
+                    # CAP NHAT TRANG THAI
+                    # =========================
+
+                    system_state = state_manager.update(
+                        eye_state,
+                        closed_duration,
+                        yaw,
+                        eye_direction
+                    )
+
+                    # =========================
+                    # RESET DANGER BANG BUTTON
+                    # =========================
+
+                    if reset_requested:
+
+                        if system_state == state_manager.DANGER:
+
+                            reset_success = state_manager.reset(
+                                yaw,
+                                eye_direction
                             )
+
+                            if reset_success:
+                                print("Reset thanh cong - SAFE")
+                            else:
+                                print(
+                                    "Reset that bai - Hay nhin thang vao camera"
+                                )
+
                         else:
                             print(
-                                "Reset that bai - Hay nhin thang vao camera"
+                                "Khong can reset - He thong khong o DANGER"
                             )
 
-                    else:
-                        print(
-                            "Khong can reset - He thong khong o DANGER"
-                        )
+                        reset_requested = False
 
-                    # Xử lý xong yêu cầu reset
+                    # Hien thi Yaw
+                    cv2.putText(
+                        frame,
+                        f"Yaw: {yaw:.1f}",
+                        (20, 240),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8,
+                        (255, 255, 0),
+                        2
+                    )
+
+                    # Hien thi huong mat
+                    cv2.putText(
+                        frame,
+                        f"LOOK: {eye_direction}",
+                        (20, 280),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.8,
+                        (255, 255, 0),
+                        2
+                    )
+
+                else:
+
+                    system_state = "UNKNOWN"
+
                     reset_requested = False
 
-                # Hiển thị Yaw
+                # ==================================
+                # MQTT: GUI TRANG THAI TAI XE
+                # ==================================
+
+                if mqtt_client.da_ket_noi:
+
+                    if system_state != last_mqtt_state:
+
+                        mqtt_client.publish_state(system_state)
+                        last_mqtt_state = system_state
+
+                # ==================================
+                # MQTT: GUI CHI SO AI
+                # ==================================
+
+                current_time = time.monotonic()
+
+                if current_time - last_metrics_time >= METRICS_INTERVAL:
+
+                    if head_pose is not None:
+
+                        metrics_head_pose = {
+                            "pitch": pitch,
+                            "yaw": yaw,
+                            "roll": roll
+                        }
+
+                    else:
+                        metrics_head_pose = None
+
+                    mqtt_client.publish_metrics(
+                        ear,
+                        metrics_head_pose,
+                        eye_direction
+                    )
+
+                    last_metrics_time = current_time
+
+                # ==================================
+                # HIEN THI TRANG THAI
+                # ==================================
+
+                if system_state == state_manager.SAFE:
+                    state_text = "SAFE"
+                    state_color = (0, 255, 0)
+
+                elif system_state == state_manager.FOCUS:
+                    state_text = "FOCUS"
+                    state_color = (0, 255, 255)
+
+                else:
+                    state_text = "DANGER"
+                    state_color = (0, 0, 255)
+
+                # ==================================
+                # GUI TRANG THAI XUONG ARDUINO
+                # ==================================
+
+                if system_state == state_manager.SAFE:
+                    arduino_state = "S"
+
+                elif system_state == state_manager.FOCUS:
+                    arduino_state = "F"
+
+                elif system_state == state_manager.DANGER:
+                    arduino_state = "D"
+
+                else:
+                    # UNKNOWN: khong gui lenh moi xuong Arduino
+                    arduino_state = None
+
+                if (
+                    arduino_state is not None
+                    and arduino_state != last_sent_state
+                ):
+
+                    arduino.write(
+                        (arduino_state + "\n").encode()
+                    )
+
+                    last_sent_state = arduino_state
+
+                    print(f"Gui Arduino: {arduino_state}")
+
                 cv2.putText(
                     frame,
-                    f"Yaw: {yaw:.1f}",
-                    (20, 240),
+                    f"STATE: {state_text}",
+                    (20, 200),
                     cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    (255, 255, 0),
+                    1,
+                    state_color,
                     2
                 )
 
-                # Hiển thị hướng mắt
-                cv2.putText(
-                    frame,
-                    f"LOOK: {eye_direction}",
-                    (20, 280),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.8,
-                    (255, 255, 0),
-                    2
-                )
+                # Hien thi canh bao DANGER
+                if system_state == state_manager.DANGER:
+
+                    cv2.putText(
+                        frame,
+                        "DANGER! WAKE UP",
+                        (20, 160),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 255),
+                        2
+                    )
+
+                # Ve landmark khuon mat
+                for landmark in face:
+
+                    x = int(
+                        landmark.x * frame.shape[1]
+                    )
+
+                    y = int(
+                        landmark.y * frame.shape[0]
+                    )
+
+                    cv2.circle(
+                        frame,
+                        (x, y),
+                        1,
+                        (0, 255, 0),
+                        -1
+                    )
 
             else:
-                system_state = state_manager.SAFE
 
-                # Không có head pose → bỏ yêu cầu reset
-                reset_requested = False
+                # Khong tim thay khuon mat
+                system_state = "UNKNOWN"
 
-            # =========================
-            # HIỂN THỊ TRẠNG THÁI
-            # =========================
+                # Gui UNKNOWN neu trang thai thay doi
+                if (
+                    mqtt_client.da_ket_noi
+                    and system_state != last_mqtt_state
+                ):
 
-            if system_state == state_manager.SAFE:
+                    mqtt_client.publish_state(system_state)
 
-                state_text = "SAFE"
-                state_color = (0, 255, 0)
-
-            elif system_state == state_manager.FOCUS:
-
-                state_text = "FOCUS"
-                state_color = (0, 255, 255)
-
-            else:
-
-                state_text = "DANGER"
-                state_color = (0, 0, 255)
-
-            # =========================
-            # GỬI TRẠNG THÁI XUỐNG ARDUINO
-            # =========================
-
-            if system_state == state_manager.SAFE:
-                arduino_state = "S"
-
-            elif system_state == state_manager.FOCUS:
-                arduino_state = "F"
-
-            else:
-                arduino_state = "D"
-
-            if arduino_state != last_sent_state:
-                arduino.write((arduino_state + "\n").encode())
-                last_sent_state = arduino_state
-
-                print(f"Gui Arduino: {arduino_state}")
-
-            cv2.putText(
-                frame,
-                f"STATE: {state_text}",
-                (20, 200),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                state_color,
-                2
-            )
-
-            # Hiển thị cảnh báo DANGER
-            if system_state == state_manager.DANGER:
+                    last_mqtt_state = system_state
 
                 cv2.putText(
                     frame,
-                    "DANGER! WAKE UP",
-                    (20, 160),
+                    "NO FACE DETECTED",
+                    (20, 50),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1,
                     (0, 0, 255),
                     2
                 )
 
-            # Vẽ toàn bộ landmark khuôn mặt
-            for landmark in face:
+                # Huy yeu cau reset neu khong co khuon mat
+                reset_requested = False
 
-                x = int(
-                    landmark.x * frame.shape[1]
-                )
+            # ==================================
+            # HIEN THI CAMERA
+            # ==================================
 
-                y = int(
-                    landmark.y * frame.shape[0]
-                )
-
-                cv2.circle(
-                    frame,
-                    (x, y),
-                    1,
-                    (0, 255, 0),
-                    -1
-                )
-
-        else:
-
-            cv2.putText(
-                frame,
-                "NO FACE DETECTED",
-                (20, 50),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 0, 255),
-                2
+            cv2.imshow(
+                "KSafe AI - Camera",
+                frame
             )
 
-        # Hiển thị camera
-        cv2.imshow(
-            "KSafe AI - Camera",
-            frame
-        )
+            key = cv2.waitKey(1) & 0xFF
 
-        key = cv2.waitKey(1) & 0xFF
-
-        # Nhấn Q để thoát
-        if key == ord("q"):
-            break
+            if key == ord("q"):
+                break
 
 
-cap.release()
-arduino.close()
-cv2.destroyAllWindows()
+except KeyboardInterrupt:
+    print("\nDung chuong trinh!")
+
+finally:
+
+    # Giai phong camera
+    cap.release()
+
+    # Ngat ket noi Arduino
+    if arduino.is_open:
+        arduino.close()
+
+    # Ngat ket noi MQTT
+    mqtt_client.disconnect()
+
+    # Dong cua so OpenCV
+    cv2.destroyAllWindows()
+
+    print("[SYSTEM] Da dung KSafe AI!")
