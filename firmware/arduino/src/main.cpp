@@ -37,6 +37,7 @@ void setup() {
 void loop() {
     unsigned long thoiGianHienTai = millis();
 
+    // Doc trang thai tu Python
     if (Serial.available() > 0) {
         char trangThai = Serial.read();
 
@@ -49,8 +50,13 @@ void loop() {
         }
     }
 
+    // Cap nhat animation mat OLED
+    lcd.capNhat();
+
+    // Cap nhat am thanh canh bao
     stateController.capNhatBuzzer(thoiGianHienTai);
 
+    // Xu ly nut nhan reset
     if (button.vuaNhan()) {
         Serial.println("R");
     }

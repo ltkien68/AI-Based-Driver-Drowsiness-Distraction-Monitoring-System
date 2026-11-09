@@ -4,7 +4,10 @@
     "Decomp",
     "FACEMESH",
     "imshow",
+    "keepalive",
+    "ksafe",
     "Landmarker",
+    "MQTT",
     "Rodrigues",
     "SOLVEPNP",
     "SRGB"

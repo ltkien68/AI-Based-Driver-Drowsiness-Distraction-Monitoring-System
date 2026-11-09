@@ -38,7 +38,7 @@ if not cap.isOpened():
 
 # Kết nối ARDUINO
 arduino = serial.Serial(
-    "COM7",
+    "COM9",
     9600,
     timeout=0.01
 )
