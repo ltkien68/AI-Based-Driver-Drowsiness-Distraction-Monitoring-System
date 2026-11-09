@@ -1,1 +1,103 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSafe AI | Live Monitoring</title><link rel="stylesheet" href="../assets/css/variables.css"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/dashboard.css"><link rel="stylesheet" href="../assets/css/responsive.css"><script src="https://unpkg.com/lucide@latest"></script></head><body><div class="app-shell"><aside class="sidebar"><a class="brand" href="../index.html"><span class="brand-mark"><i data-lucide="shield-check"></i></span><span><strong>KSafe<span> AI</span></strong><small>DRIVER SAFETY SYSTEM</small></span></a><div class="side-label">WORKSPACE</div><nav class="nav-list"><a class="nav-link" href="../index.html"><i data-lucide="layout-dashboard"></i>Overview</a><a class="nav-link active" href="monitoring.html"><i data-lucide="scan-eye"></i>Live Monitoring</a><a class="nav-link" href="devices.html"><i data-lucide="cpu"></i>Device Management</a><a class="nav-link" href="alerts.html"><i data-lucide="bell"></i>Alert History</a><a class="nav-link" href="analytics.html"><i data-lucide="chart-no-axes-combined"></i>Analytics</a></nav><div class="side-label side-label-bottom">PREFERENCES</div><nav class="nav-list"><a class="nav-link" href="settings.html"><i data-lucide="settings-2"></i>Settings</a></nav><div class="sidebar-spacer"></div><div class="connection-panel"><div class="connection-title">DEVICE CONNECTION</div><div class="connection-row"><span>ESP32</span><b>Demo mode</b></div><div class="connection-row"><span>Python AI</span><b class="muted">Demo mode</b></div></div><div class="sidebar-version">KSafe AI <span>v1.0.0</span></div></aside><main class="main-content"><header class="topbar"><div class="breadcrumbs"><span>Workspace</span><i data-lucide="chevron-right"></i><strong>Live Monitoring</strong></div><div class="topbar-actions"><span class="environment-pill">LOCAL ENVIRONMENT</span><div class="avatar">KS</div></div></header><section class="page-content"><div class="page-heading"><div><div class="eyebrow">REAL-TIME PERCEPTION</div><h1>Live Monitoring</h1><p>Camera preview and AI perception metrics.</p></div><span class="demo-badge">DEMO DATA</span></div><div class="monitor-grid"><article class="panel camera-panel"><div class="panel-header"><div><h3>Driver camera</h3><span class="subtle">Camera stream placeholder</span></div><span class="live-label">● LIVE</span></div><div class="camera-placeholder" style="height:440px"><div class="camera-frame"><i data-lucide="camera"></i><strong>Waiting for camera stream</strong><span>Connect the Python service to provide a real video feed.</span></div><span class="camera-overlay-label">CAM 01 · DRIVER MONITORING</span></div></article><article class="panel ai-panel"><div class="panel-header"><div><h3>AI perception</h3><span class="subtle">Sample measurements</span></div></div><div class="measure-list"><div class="measure-row"><div><span>EAR</span><small>Eye Aspect Ratio</small></div><strong>0.28</strong><span class="measure-tag">DEMO</span></div><div class="measure-row"><div><span>Pitch</span><small>Head angle</small></div><strong>2.4°</strong><span class="measure-tag">DEMO</span></div><div class="measure-row"><div><span>Yaw</span><small>Head angle</small></div><strong>-1.8°</strong><span class="measure-tag">DEMO</span></div><div class="measure-row"><div><span>Roll</span><small>Head angle</small></div><strong>0.6°</strong><span class="measure-tag">DEMO</span></div><div class="measure-row"><div><span>Eye direction</span><small>Gaze estimation</small></div><strong>CENTER</strong><span class="measure-tag">DEMO</span></div></div></article></div></section></main></div><script>lucide.createIcons()</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Live Monitoring · KSafe AI</title>
+  <meta name="description" content="Real-time camera, EAR, head pose and gaze monitoring">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="monitoring" data-title="Live Monitoring" data-base="../">
+
+  <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
+  <main id="page">
+
+    <div class="page-head">
+      <div>
+        <h2>Live Monitoring</h2>
+        <p>Camera feed and real-time measurements from the Python AI service (OpenCV + MediaPipe).</p>
+      </div>
+      <div class="card__actions">
+        <span data-source-tag></span>
+        <button class="btn btn--sm" type="button" id="btn-pause" aria-pressed="false"><i data-icon="pause" data-size="14"></i><span>Pause charts</span></button>
+        <button class="btn btn--sm" type="button" id="btn-clear"><i data-icon="rotate-ccw" data-size="14"></i>Clear history</button>
+      </div>
+    </div>
+
+    <section class="mon-grid">
+      <article class="card">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="video" data-size="18"></i>Camera View</h3>
+          <div class="card__actions"><a class="btn btn--sm" href="settings.html"><i data-icon="settings" data-size="14"></i>Camera settings</a></div>
+        </div>
+        <div class="card__body"><div id="camera"></div></div>
+      </article>
+
+      <div class="mon-side">
+        <article id="safety" aria-label="Driver safety status"></article>
+        <article class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+          <div id="metrics"></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="mon-charts">
+      <article class="card">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="eye" data-size="18"></i>EAR Monitoring</h3>
+          <div class="card__actions"><span class="card__sub">last 60 samples</span></div>
+        </div>
+        <div class="card__body">
+          <div class="chart-readout"><strong id="ear-now">—</strong><span>ratio</span><span id="ear-badge" class="badge badge--off">No data</span></div>
+          <div id="chart-ear"></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="gauge" data-size="18"></i>Head Pose Monitoring</h3>
+          <div class="card__actions"><span class="card__sub">degrees</span></div>
+        </div>
+        <div class="card__body">
+          <div class="pose-legend" id="pose-legend">
+            <span><i style="background:#2563EB"></i>Pitch <b data-v="pitch">—</b></span>
+            <span><i style="background:#0F172A"></i>Yaw <b data-v="yaw">—</b></span>
+            <span><i style="background:#94A3B8"></i>Roll <b data-v="roll">—</b></span>
+          </div>
+          <div id="chart-pose"></div>
+        </div>
+      </article>
+
+      <article class="card" id="gaze-card" data-state="UNKNOWN">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="scan-face" data-size="18"></i>Eye Gaze Monitoring</h3>
+          <div class="card__actions"><span class="badge badge--off" id="gaze-badge">No data</span></div>
+        </div>
+        <div class="card__body">
+          <div class="gaze-pad" aria-label="Gaze direction indicator">
+            <span class="gaze-pad__lbl gaze-pad__lbl--t">UP</span><span class="gaze-pad__lbl gaze-pad__lbl--b">DOWN</span>
+            <span class="gaze-pad__lbl gaze-pad__lbl--l">LEFT</span><span class="gaze-pad__lbl gaze-pad__lbl--r">RIGHT</span>
+            <div class="gaze-pad__dot" id="gaze-dot" hidden></div>
+          </div>
+          <div class="dist" id="gaze-dist"></div>
+        </div>
+      </article>
+    </section>
+
+  </main>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/lang/vi.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/charts.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/monitoring.js"></script>
+</body>
+</html>

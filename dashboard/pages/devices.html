@@ -1,1 +1,127 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSafe AI | Device Management</title><link rel="stylesheet" href="../assets/css/variables.css"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/dashboard.css"><link rel="stylesheet" href="../assets/css/responsive.css"><script src="https://unpkg.com/lucide@latest"></script></head><body><div class="app-shell"><aside class="sidebar"><a class="brand" href="../index.html"><span class="brand-mark"><i data-lucide="shield-check"></i></span><span><strong>KSafe<span> AI</span></strong><small>DRIVER SAFETY SYSTEM</small></span></a><div class="side-label">WORKSPACE</div><nav class="nav-list"><a class="nav-link" href="../index.html"><i data-lucide="layout-dashboard"></i>Overview</a><a class="nav-link" href="monitoring.html"><i data-lucide="scan-eye"></i>Live Monitoring</a><a class="nav-link active" href="devices.html"><i data-lucide="cpu"></i>Device Management</a><a class="nav-link " href="alerts.html"><i data-lucide="bell"></i>Alert History</a><a class="nav-link " href="analytics.html"><i data-lucide="chart-no-axes-combined"></i>Analytics</a></nav><div class="side-label side-label-bottom">PREFERENCES</div><nav class="nav-list"><a class="nav-link " href="settings.html"><i data-lucide="settings-2"></i>Settings</a></nav><div class="sidebar-spacer"></div><div class="connection-panel"><div class="connection-title">DEVICE CONNECTION</div><div class="connection-row"><span>ESP32</span><b>Demo mode</b></div><div class="connection-row"><span>Python AI</span><b class="muted">Demo mode</b></div></div><div class="sidebar-version">KSafe AI <span>v1.0.0</span></div></aside><main class="main-content"><header class="topbar"><div class="breadcrumbs"><span>Workspace</span><i data-lucide="chevron-right"></i><strong>Device Management</strong></div><div class="topbar-actions"><span class="environment-pill">LOCAL ENVIRONMENT</span><div class="avatar">KS</div></div></header><section class="page-content"><div class="page-heading"><div><div class="eyebrow">DEVICE INVENTORY</div><h1>Device Management</h1><p>ESP32 connectivity and peripheral status.</p></div><span class="demo-badge">DEMO DATA</span></div><div class="device-grid"><article class="device-card"><span class="device-icon"><i data-lucide="cpu"></i></span><div><strong>ESP32 DevKit</strong><small>Main controller</small></div><span class="device-state demo-state">DEMO</span></article><article class="device-card"><span class="device-icon"><i data-lucide="cpu"></i></span><div><strong>RGB LED</strong><small>Visual alert output</small></div><span class="device-state demo-state">DEMO</span></article><article class="device-card"><span class="device-icon"><i data-lucide="cpu"></i></span><div><strong>Buzzer</strong><small>Audio alert output</small></div><span class="device-state demo-state">DEMO</span></article><article class="device-card"><span class="device-icon"><i data-lucide="cpu"></i></span><div><strong>OLED / LCD</strong><small>Driver status display</small></div><span class="device-state demo-state">DEMO</span></article><article class="device-card"><span class="device-icon"><i data-lucide="cpu"></i></span><div><strong>Reset button</strong><small>Physical input</small></div><span class="device-state demo-state">DEMO</span></article></div></section></main></div><script>lucide.createIcons();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Device Management · KSafe AI</title>
+  <meta name="description" content="ESP32 device information, connection and peripherals">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="devices" data-title="Device Management" data-base="../">
+
+  <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
+  <main id="page">
+
+    <div class="page-head">
+      <div>
+        <h2>Device Management</h2>
+        <p>ESP32 node on the local network: identity, connection, peripherals and API commands.</p>
+      </div>
+      <div class="card__actions">
+        <span data-source-tag></span>
+        <button class="btn btn--sm" type="button" id="btn-refresh"><i data-icon="refresh" data-size="14"></i>Refresh now</button>
+      </div>
+    </div>
+
+    <section class="dev-grid">
+      <article class="card">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="cpu" data-size="18"></i>ESP32 Information</h3>
+          <div class="card__actions" id="dev-conn-badge"></div>
+        </div>
+        <div class="info-list" id="dev-info"></div>
+      </article>
+
+      <article class="card">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="plug" data-size="18"></i>Connection Settings</h3>
+        </div>
+        <form class="card__body stack" id="conn-form" novalidate>
+          <div class="form-grid">
+            <div class="field full">
+              <label for="f-ip">ESP32 IP address</label>
+              <div class="input-group"><input class="input mono" id="f-ip" name="esp32Ip" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="192.168.1.50"><span class="input-group__addon">http://</span></div>
+              <div class="field__hint">The ESP32 runs an HTTP server on the LAN. A fixed or reserved IP is recommended.</div>
+              <div class="field__error" id="err-ip" hidden></div>
+            </div>
+            <div class="field">
+              <label for="f-poll">Polling interval</label>
+              <select class="select" id="f-poll" name="pollIntervalMs">
+                <option value="500">500 ms</option><option value="1000">1 second</option><option value="2000">2 seconds</option><option value="5000">5 seconds</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-timeout">Request timeout</label>
+              <div class="input-group"><input class="input mono" id="f-timeout" name="requestTimeoutMs" type="number" min="500" max="10000" step="100"><span class="input-group__addon">ms</span></div>
+              <div class="field__error" id="err-timeout" hidden></div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn--primary" type="submit"><i data-icon="save" data-size="16"></i>Save</button>
+            <button class="btn" type="button" id="btn-test"><i data-icon="zap" data-size="16"></i>Test connection</button>
+          </div>
+          <div class="test-result" id="test-result" hidden></div>
+          <div class="note"><i data-icon="info" data-size="16"></i><span>The test always contacts the real device, even while the dashboard is in DEMO mode. The ESP32 firmware must reply with the header <code class="mono">Access-Control-Allow-Origin: *</code> so the browser can read <code class="mono">/api/status</code>.</span></div>
+        </form>
+      </article>
+    </section>
+
+    <section class="card" style="margin-bottom:var(--gap)">
+      <div class="card__header">
+        <h3 class="card__title"><i data-icon="lightbulb" data-size="18"></i>Peripherals</h3>
+        <div class="card__actions"><span data-source-tag></span></div>
+      </div>
+      <div class="card__body--flush" id="dev-grid"></div>
+    </section>
+
+    <section class="an-grid an-grid--even">
+      <article class="card">
+        <div class="card__header"><h3 class="card__title"><i data-icon="server" data-size="18"></i>ESP32 API</h3></div>
+        <div>
+          <div class="endpoint">
+            <span class="method method--get">GET</span>
+            <div><code>/api/status</code><div class="endpoint__desc">Read device status</div></div>
+            <div class="card__actions"><button class="btn btn--sm" type="button" id="btn-fetch">Fetch</button></div>
+          </div>
+          <div class="endpoint">
+            <span class="method method--post">POST</span>
+            <div><code>/api/state</code><div class="endpoint__desc">Push driver state to LED / buzzer / displays</div></div>
+            <div class="card__actions">
+              <select class="select" id="sel-state" aria-label="State to send"><option value="SAFE">SAFE</option><option value="FOCUS">FOCUS</option><option value="DANGER">DANGER</option></select>
+              <button class="btn btn--sm" type="button" id="btn-state"><i data-icon="send" data-size="14"></i>Send</button>
+            </div>
+          </div>
+          <div class="endpoint">
+            <span class="method method--post">POST</span>
+            <div><code>/api/reset/ack</code><div class="endpoint__desc">Acknowledge a reset after DANGER</div></div>
+            <div class="card__actions"><button class="btn btn--sm" type="button" id="btn-ack"><i data-icon="rotate-ccw" data-size="14"></i>Acknowledge</button></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="file-text" data-size="18"></i>Command Log</h3>
+          <div class="card__actions"><span class="card__sub">this session</span></div>
+        </div>
+        <div class="card__body--flush" id="cmd-log"></div>
+      </article>
+    </section>
+
+  </main>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/lang/vi.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/charts.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/devices.js"></script>
+</body>
+</html>

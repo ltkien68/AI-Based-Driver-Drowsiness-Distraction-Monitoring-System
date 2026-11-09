@@ -1,1 +1,132 @@
-.metric-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}.metric-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 17px;box-shadow:var(--shadow);min-height:119px}.metric-top{display:flex;justify-content:space-between;align-items:center;color:#64748b;font-size:9px;font-weight:700;letter-spacing:.7px}.metric-icon{width:31px;height:31px;border-radius:8px;display:grid;place-items:center}.metric-icon svg{width:16px}.metric-icon.blue{background:#eff6ff;color:#2563eb}.metric-icon.violet{background:#f5f3ff;color:#7c3aed}.metric-icon.green{background:#f0fdf4;color:#16a34a}.metric-icon.amber{background:#fffbeb;color:#d97706}.metric-value{font-size:21px;font-weight:700;letter-spacing:-.5px;margin:9px 0 5px}.state-safe{color:var(--safe)}.metric-foot{font-size:9px;color:var(--muted);display:flex;align-items:center;gap:7px}.metric-foot .status-dot{width:6px;height:6px}.monitor-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:14px}.camera-panel,.ai-panel{overflow:hidden}.camera-meta{display:flex;align-items:center;gap:12px}.live-label{display:flex;align-items:center;gap:6px;color:#dc2626;font-size:9px;font-weight:700;letter-spacing:.5px}.live-label span{width:6px;height:6px;border-radius:50%;background:#dc2626;box-shadow:0 0 0 3px #fee2e2}.fps-label{font-size:9px;color:var(--muted);background:#f8fafc;padding:5px 7px;border-radius:5px}.camera-placeholder{height:255px;background:#0b1220;position:relative;display:grid;place-items:center;overflow:hidden;background-image:linear-gradient(rgba(51,65,85,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(51,65,85,.13) 1px,transparent 1px);background-size:28px 28px}.camera-frame{display:grid;justify-items:center;gap:10px;color:#64748b;text-align:center}.camera-frame svg{width:34px;height:34px;color:#475569}.camera-frame strong{font-size:11px;color:#cbd5e1;font-weight:600}.camera-frame span{font-size:9px;color:#64748b}.camera-corner{position:absolute;width:22px;height:22px;border-color:#3b82f6;border-style:solid}.corner-tl{top:22px;left:22px;border-width:2px 0 0 2px}.corner-tr{top:22px;right:22px;border-width:2px 2px 0 0}.corner-bl{bottom:22px;left:22px;border-width:0 0 2px 2px}.corner-br{bottom:22px;right:22px;border-width:0 2px 2px 0}.camera-overlay-label{position:absolute;bottom:12px;left:15px;color:#64748b;font-size:8px;letter-spacing:1px}.camera-footer{display:flex;justify-content:space-between;padding:12px 17px;color:#64748b;font-size:9px}.camera-footer span{display:flex;align-items:center;gap:6px}.camera-footer svg{width:13px}.camera-footer b{font-weight:600}.mini-chip{font-size:8px;letter-spacing:.6px;background:#eff6ff;color:#2563eb;border-radius:5px;padding:6px 8px;font-weight:700}.measure-list{padding:5px 17px}.measure-row{min-height:48px;display:grid;grid-template-columns:1fr 62px 72px;align-items:center;gap:8px;border-bottom:1px solid #f1f5f9}.measure-row:last-child{border:0}.measure-row div{display:grid;gap:3px}.measure-row div span{font-size:10px;font-weight:600}.measure-row small{font-size:8px;color:#94a3b8}.measure-row>strong{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}.measure-row .measure-text{font-size:9px}.measure-track{height:4px;background:#e2e8f0;border-radius:5px;overflow:hidden}.measure-track i{display:block;height:100%;background:#3b82f6;border-radius:5px}.measure-tag{font-size:7px;letter-spacing:.4px;color:#15803d;background:#f0fdf4;padding:4px 5px;border-radius:4px;text-align:center}.perception-footer{font-size:9px;color:#94a3b8;padding:10px 17px 14px;border-top:1px solid #f1f5f9;display:flex;align-items:center;gap:7px}.perception-footer .status-dot{width:6px;height:6px}.status-heading{margin-top:27px}.safety-banner{border:1px solid #bbf7d0;background:var(--safe-bg);border-radius:12px;padding:17px 20px;display:flex;align-items:center;gap:15px}.safety-symbol{width:42px;height:42px;border-radius:11px;background:#dcfce7;color:#16a34a;display:grid;place-items:center}.safety-symbol svg{width:22px}.safety-copy{flex:1}.safety-copy .eyebrow{color:#16a34a;margin-bottom:4px}.safety-copy h2{font-size:15px;margin:0 0 4px;color:#166534}.safety-copy p{font-size:10px;color:#4b7b5b;margin:0}.safety-state{font-size:10px;font-weight:800;letter-spacing:1px;color:#15803d;background:#dcfce7;padding:8px 12px;border-radius:6px}.focus-banner{background:var(--focus-bg);border-color:#fde68a}.focus-banner .safety-symbol{background:#fef3c7;color:#ca8a04}.focus-banner .safety-copy h2,.focus-banner .safety-state{color:#a16207}.focus-banner .safety-copy .eyebrow{color:#a16207}.focus-banner .safety-state{background:#fef3c7}.danger-banner{background:var(--danger-bg);border-color:#fecaca}.danger-banner .safety-symbol{background:#fee2e2;color:#dc2626}.danger-banner .safety-copy h2,.danger-banner .safety-state{color:#b91c1c}.danger-banner .safety-copy .eyebrow{color:#dc2626}.danger-banner .safety-state{background:#fee2e2}.device-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:11px}.device-card{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:13px 12px;min-width:0}.device-icon{width:31px;height:31px;flex:none;border-radius:8px;background:#f1f5f9;color:#64748b;display:grid;place-items:center}.device-icon svg{width:15px}.device-card>div{min-width:0;display:grid;gap:4px;flex:1}.device-card strong{font-size:10px}.device-card small{font-size:8px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.device-state{font-size:7px;font-weight:700;color:#64748b;background:#f1f5f9;padding:4px 5px;border-radius:4px}.device-state.demo-state{color:#a16207;background:#fffbeb}.table-panel{overflow:hidden}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}th{font-size:8px;letter-spacing:.7px;color:#94a3b8;font-weight:700;background:#f8fafc;padding:12px 17px}td{font-size:10px;color:#475569;padding:12px 17px;border-top:1px solid #f1f5f9}tbody tr:hover{background:#fafcff}.event-name{display:flex;align-items:center;gap:8px;font-weight:600;color:#334155}.event-name svg{width:14px;height:14px;color:#64748b}.severity,.resolved,.detected{font-size:8px;font-weight:600;padding:4px 7px;border-radius:4px}.severity.normal{color:#15803d;background:#f0fdf4}.severity.warning{color:#a16207;background:#fefce8}.severity.critical{color:#b91c1c;background:#fef2f2}.resolved{color:#15803d;background:#f0fdf4}.detected{color:#a16207;background:#fefce8}
+/* ==========================================================================
+   KSafe AI – Overview dashboard + các component dùng chung giữa Overview và Monitoring
+   (status cards, camera, metrics, safety panel, device grid, alerts table)
+   ========================================================================== */
+
+/* ---- Grid ---- */
+.grid { display: grid; gap: var(--gap); margin-bottom: var(--gap); }
+.grid--status   { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid--overview { grid-template-columns: minmax(0, 9fr) minmax(0, 3fr); align-items: stretch; }
+.grid--lower    { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); align-items: start; }
+
+/* ==========================================================================
+   A. System status cards
+   ========================================================================== */
+.stat-card { padding: 18px; display: flex; flex-direction: column; gap: 14px; position: relative; }
+.stat-card__top { display: flex; align-items: center; gap: 12px; }
+.stat-card__icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--color-primary-soft); color: var(--color-primary); flex: none; }
+.stat-card__label { font-size: 13px; font-weight: 600; color: var(--color-text-2); }
+.stat-card .tag-source { margin-left: auto; align-self: flex-start; }
+.stat-card__value { display: flex; align-items: center; gap: 10px; font-size: 26px; font-weight: 700; line-height: 1.1; color: var(--color-navy); letter-spacing: -.01em; }
+.stat-card__value .dot { width: 10px; height: 10px; }
+.stat-card__value[data-state] { color: var(--state-text); }
+.stat-card__rows { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--color-border); font-size: 13px; }
+.kv { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.kv > span:first-child { color: var(--color-text-2); }
+.kv > span:last-child, .kv > strong { margin-left: auto; font-weight: 600; text-align: right; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ==========================================================================
+   B. Live monitoring – camera
+   ========================================================================== */
+.live-body { display: grid; grid-template-columns: minmax(0, 1fr) 256px; gap: 18px; padding: 18px; align-items: stretch; }
+
+.camera { position: relative; width: 100%; aspect-ratio: 16 / 10; min-height: 260px; border-radius: var(--radius); overflow: hidden; background: var(--color-navy); color: #E2E8F0; isolation: isolate; }
+.camera--tall { aspect-ratio: 4 / 3; }
+.camera::before { /* lưới kỹ thuật mờ phía sau placeholder */
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background-image: linear-gradient(rgba(148, 163, 184, .07) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, .07) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.camera__media { position: absolute; inset: 0; }
+.camera__media video, .camera__media img { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+.camera.is-mirrored .camera__media video, .camera.is-mirrored .camera__media img { transform: scaleX(-1); }
+.camera__placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; }
+.camera__placeholder .icon { color: #475569; margin-bottom: 4px; }
+.camera__placeholder strong { color: #F1F5F9; font-size: 15px; }
+.camera__placeholder p { max-width: 340px; font-size: 12.5px; color: #94A3B8; }
+.camera__placeholder.is-demo { justify-content: flex-end; padding: 0 20px 50px; gap: 3px; }
+.camera__placeholder.is-demo p { font-size: 12px; }
+.camera__placeholder a.link { color: #93C5FD; font-weight: 600; white-space: nowrap; }
+.camera__placeholder .btn { margin-top: 8px; background: transparent; color: #E2E8F0; border-color: #475569; }
+.camera__placeholder .btn:hover { background: rgba(148, 163, 184, .15); }
+.camera__overlay { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--state, var(--color-off)); pointer-events: none; }
+.camera__overlay .box { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; opacity: .9; }
+.camera__overlay .corner { fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.camera__overlay .zone { fill: currentColor; fill-opacity: .08; stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .8; }
+.camera__boxlabel { position: absolute; transform: translateY(-100%); padding: 2px 8px; border-radius: 4px 4px 0 0; background: var(--state, var(--color-off)); color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; }
+[data-state="FOCUS"] .camera__boxlabel { color: #422006; }
+
+.camera__tl, .camera__tr, .camera__bl { position: absolute; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.camera__tl { top: 12px; left: 12px; }
+.camera__tr { top: 12px; right: 12px; }
+.camera__bl { bottom: 12px; left: 12px; right: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 6px; background: rgba(15, 23, 42, .72); backdrop-filter: blur(4px); border: 1px solid rgba(148, 163, 184, .25); color: #E2E8F0; font-size: 11.5px; font-weight: 500; white-space: nowrap; }
+.chip b { font-weight: 600; color: #fff; }
+.live-tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px; border-radius: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: #fff; background: #475569; }
+.live-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #CBD5E1; }
+.live-tag.is-live { background: var(--color-danger); }
+.live-tag.is-live::before { background: #fff; animation: blink 1.2s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+
+/* ---- Metrics (AI info panel) ---- */
+.metrics { display: flex; flex-direction: column; border: 1px solid var(--color-border); border-radius: var(--radius); overflow: hidden; background: var(--color-surface); }
+.metrics__head { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--color-surface-2); border-bottom: 1px solid var(--color-border); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-2); }
+.metrics__head .tag-source { margin-left: auto; }
+.metric { flex: 1; display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--color-border); min-height: 46px; }
+.metric:last-child { border-bottom: 0; }
+.metric__name { min-width: 0; }
+.metric__name strong { display: block; font-size: 13px; font-weight: 600; line-height: 1.25; }
+.metric__name span { display: block; font-size: 11.5px; color: var(--color-text-2); line-height: 1.25; }
+.metric__value { margin-left: auto; text-align: right; font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--color-navy); white-space: nowrap; }
+.metric__value small { font-family: var(--font-sans); font-size: 11px; font-weight: 500; color: var(--color-text-2); margin-left: 2px; }
+.metric__value .badge { font-family: var(--font-sans); }
+.metric__value[data-tone="warn"] { color: var(--color-focus-text); }
+.metric__value[data-tone="danger"] { color: var(--color-danger-text); }
+.metric__value[data-tone="none"] { color: var(--color-text-3); }
+
+/* ==========================================================================
+   C. Driver safety status
+   ========================================================================== */
+.safety { display: flex; flex-direction: column; overflow: hidden; border-color: var(--state-border); background: var(--color-surface); transition: border-color .3s; }
+.safety__hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 28px 20px; text-align: center; background: var(--state-soft); transition: background .3s; }
+.safety__icon { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; background: var(--state); color: #fff; box-shadow: 0 0 0 10px color-mix(in srgb, var(--state) 16%, transparent); transition: background .3s; }
+[data-state="FOCUS"] .safety__icon { color: #422006; }
+[data-state="DANGER"] .safety__icon { animation: danger-pulse 1.1s ease-in-out infinite; }
+@keyframes danger-pulse { 50% { box-shadow: 0 0 0 18px color-mix(in srgb, var(--state) 8%, transparent); } }
+.safety__state { font-size: 13px; font-weight: 700; letter-spacing: .14em; color: var(--state-text); }
+.safety__title { font-size: 20px; font-weight: 700; line-height: 1.25; color: var(--color-navy); }
+.safety__desc { font-size: 13px; color: var(--color-text-2); max-width: 280px; }
+.safety__foot { display: grid; gap: 14px; padding: 16px 18px 18px; border-top: 1px solid var(--state-border); }
+.state-rail { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.state-rail span { display: flex; align-items: center; justify-content: center; gap: 6px; height: 30px; border-radius: 7px; border: 1px solid var(--color-border); background: var(--color-surface-2); color: var(--color-text-3); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; transition: all .2s; }
+.state-rail span.is-active { color: #fff; border-color: transparent; background: var(--c); }
+.state-rail span[data-s="SAFE"] { --c: var(--color-safe); }
+.state-rail span[data-s="FOCUS"] { --c: var(--color-focus); }
+.state-rail span[data-s="FOCUS"].is-active { color: #422006; }
+.state-rail span[data-s="DANGER"] { --c: var(--color-danger); }
+
+/* ==========================================================================
+   D. Device grid
+   ========================================================================== */
+.devices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.device { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--color-border); min-width: 0; }
+.device:nth-child(odd) { border-right: 1px solid var(--color-border); }
+.device:nth-last-child(-n+2) { border-bottom: 0; }
+.devices--wide { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.devices--wide .device:nth-child(odd) { border-right: 0; }
+.devices--wide .device { border-right: 1px solid var(--color-border); }
+.devices--wide .device:nth-child(3n) { border-right: 0; }
+.devices--wide .device:nth-last-child(-n+3) { border-bottom: 0; }
+.device__icon { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; flex: none; background: var(--color-bg); color: var(--color-navy-3); }
+.device__icon[data-tone="safe"] { background: var(--color-safe-soft); color: var(--color-safe); }
+.device__icon[data-tone="focus"] { background: var(--color-focus-soft); color: var(--color-focus-text); }
+.device__icon[data-tone="danger"] { background: var(--color-danger-soft); color: var(--color-danger); }
+.device__body { min-width: 0; flex: 1; }
+.device__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.device__row strong { font-size: 13.5px; font-weight: 600; }
+.device__desc { margin-top: 2px; font-size: 12px; color: var(--color-text-2); overflow-wrap: anywhere; }
+
+/* ==========================================================================
+   E. Alerts (compact table)
+   ========================================================================== */
+.sev { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; }

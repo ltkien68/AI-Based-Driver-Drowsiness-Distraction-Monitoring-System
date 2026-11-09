@@ -1,1 +1,91 @@
-@media(max-width:1200px){.metric-grid{grid-template-columns:repeat(2,1fr)}.device-grid{grid-template-columns:repeat(3,1fr)}.monitor-grid{grid-template-columns:minmax(0,1.3fr) minmax(280px,1fr)}}@media(max-width:900px){:root{--sidebar:235px}.page-content{padding:25px 22px}.topbar{padding:0 22px}.monitor-grid{grid-template-columns:1fr}.camera-placeholder{height:290px}.device-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.open{transform:translateX(0)}.main-content{margin-left:0}.menu-toggle{display:grid;place-items:center;margin-right:12px}.topbar{height:60px;padding:0 15px;justify-content:flex-start}.breadcrumbs{flex:1}.topbar-actions{gap:9px}.environment-pill,.topbar-divider,.clock-block span{display:none}.page-content{padding:22px 15px}.page-heading{align-items:flex-start;gap:14px;flex-direction:column}.page-heading h1{font-size:20px}.heading-actions{width:100%;justify-content:space-between}.metric-grid{gap:9px}.metric-card{padding:13px;min-height:112px}.metric-value{font-size:18px}.monitor-grid{gap:10px}.camera-placeholder{height:230px}.device-grid{grid-template-columns:1fr 1fr;gap:8px}.device-card{padding:10px 8px;gap:7px}.device-state{display:none}.safety-banner{padding:14px;gap:10px}.safety-symbol{width:36px;height:36px}.safety-copy h2{font-size:13px}.safety-copy p{font-size:9px}.safety-state{font-size:8px;padding:7px}.page-footer{gap:10px;flex-direction:column}.section-heading{align-items:flex-end}.section-heading h2{font-size:13px}}@media(max-width:390px){.metric-grid{grid-template-columns:1fr 1fr}.metric-foot{font-size:8px}.device-grid{grid-template-columns:1fr}.camera-footer{gap:8px;flex-wrap:wrap}.breadcrumbs{font-size:10px}}
+/* ==========================================================================
+   KSafe AI – Responsive
+   Ưu tiên desktop (1366 / 1920). Tablet và mobile thu gọn dần.
+   ========================================================================== */
+
+/* ---- Màn hình rất rộng (1920+) ---- */
+@media (min-width: 1700px) {
+  :root { --content-pad: 32px; --gap: 24px; }
+  .live-body { grid-template-columns: minmax(0, 1fr) 300px; }
+}
+
+/* ---- Laptop nhỏ (<=1279) ---- */
+@media (max-width: 1279px) {
+  :root { --sidebar-w: 220px; --content-pad: 20px; --gap: 16px; }
+  .grid--overview { grid-template-columns: minmax(0, 1fr); }
+  .grid--overview .safety__hero { flex-direction: row; text-align: left; justify-content: flex-start; gap: 22px; padding: 24px 28px; }
+  .grid--overview .safety__icon { width: 72px; height: 72px; }
+  .grid--lower { grid-template-columns: minmax(0, 1fr); }
+  .mon-grid { grid-template-columns: minmax(0, 1fr); }
+  .mon-charts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .an-grid { grid-template-columns: minmax(0, 1fr); }
+  .dev-grid { grid-template-columns: minmax(0, 1fr); }
+  .toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .toolbar .field--search { grid-column: 1 / -1; }
+  .devices--wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .devices--wide .device:nth-child(3n) { border-right: 1px solid var(--color-border); }
+  .devices--wide .device:nth-child(2n) { border-right: 0; }
+  .devices--wide .device:nth-last-child(-n+3) { border-bottom: 1px solid var(--color-border); }
+  .devices--wide .device:nth-last-child(-n+2) { border-bottom: 0; }
+}
+
+/* ---- Tablet (<=1023): sidebar -> off-canvas ---- */
+@media (max-width: 1023px) {
+  :root { --sidebar-w: 264px; }
+  .sidebar { transform: translateX(-100%); transition: transform .22s ease; box-shadow: none; }
+  body.nav-open .sidebar { transform: none; box-shadow: var(--shadow-lg); }
+  body.nav-open .sidebar-backdrop { display: block; }
+  body.nav-open { overflow: hidden; }
+  .sidebar__close { display: inline-flex; }
+  .main { margin-left: 0; }
+  .topbar__menu { display: inline-flex; margin-left: -6px; }
+  .grid--status { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .live-body { grid-template-columns: minmax(0, 1fr); }
+  .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metrics__head { grid-column: 1 / -1; }
+  .metric:nth-child(even) { border-right: 1px solid var(--color-border); }
+  .metric:nth-child(odd):not(:first-child) { border-right: 0; }
+  .kpi-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .settings-layout { grid-template-columns: minmax(0, 1fr); }
+  .settings-aside { position: static; }
+  .clock__date { display: none; }
+}
+
+/* ---- Mobile (<=639) ---- */
+@media (max-width: 639px) {
+  :root { --content-pad: 14px; --gap: 14px; }
+  .topbar { gap: 8px; }
+  .topbar__title { font-size: 16px; }
+  .breadcrumb { display: none; }
+  .topbar__right { gap: 8px; }
+  .clock { display: none; }
+  .sys-pill span.sys-pill__text { display: none; }
+  .sys-pill { padding: 0 10px; }
+  .databanner { flex-wrap: wrap; font-size: 12px; }
+  .databanner .btn { margin-left: 0; }
+  .grid--status { grid-template-columns: minmax(0, 1fr); }
+  .live-body { padding: 12px; }
+  .camera { min-height: 200px; }
+  .metrics { grid-template-columns: minmax(0, 1fr); }
+  .metric:nth-child(even) { border-right: 0; }
+  .grid--overview .safety__hero, .mon-side .safety__hero { flex-direction: column; text-align: center; }
+  .devices, .devices--wide { grid-template-columns: minmax(0, 1fr); }
+  .devices .device, .devices--wide .device { border-right: 0 !important; border-bottom: 1px solid var(--color-border) !important; }
+  .devices .device:last-child, .devices--wide .device:last-child { border-bottom: 0 !important; }
+  .mon-charts { grid-template-columns: minmax(0, 1fr); }
+  .kpi-row { grid-template-columns: minmax(0, 1fr); }
+  .toolbar { grid-template-columns: minmax(0, 1fr); }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
+  .donut-wrap { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .donut-legend { width: 100%; }
+  .endpoint { flex-wrap: wrap; }
+  .pager { flex-wrap: wrap; }
+  .card__header { flex-wrap: wrap; }
+  .table th, .table td { padding: 10px 12px; }
+  .hide-sm { display: none; }
+  .camera { min-height: 250px; }
+  .camera__bl { flex-wrap: nowrap; gap: 6px; }
+  .camera__bl .chip { font-size: 11px; padding: 0 7px; min-width: 0; }
+  .camera__placeholder.is-demo { padding-bottom: 52px; }
+  .camera__placeholder.is-demo p { display: none; }
+}

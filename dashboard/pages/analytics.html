@@ -1,1 +1,85 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSafe AI | Analytics</title><link rel="stylesheet" href="../assets/css/variables.css"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/dashboard.css"><link rel="stylesheet" href="../assets/css/responsive.css"><script src="https://unpkg.com/lucide@latest"></script></head><body><div class="app-shell"><aside class="sidebar"><a class="brand" href="../index.html"><span class="brand-mark"><i data-lucide="shield-check"></i></span><span><strong>KSafe<span> AI</span></strong><small>DRIVER SAFETY SYSTEM</small></span></a><div class="side-label">WORKSPACE</div><nav class="nav-list"><a class="nav-link" href="../index.html"><i data-lucide="layout-dashboard"></i>Overview</a><a class="nav-link" href="monitoring.html"><i data-lucide="scan-eye"></i>Live Monitoring</a><a class="nav-link " href="devices.html"><i data-lucide="cpu"></i>Device Management</a><a class="nav-link " href="alerts.html"><i data-lucide="bell"></i>Alert History</a><a class="nav-link active" href="analytics.html"><i data-lucide="chart-no-axes-combined"></i>Analytics</a></nav><div class="side-label side-label-bottom">PREFERENCES</div><nav class="nav-list"><a class="nav-link " href="settings.html"><i data-lucide="settings-2"></i>Settings</a></nav><div class="sidebar-spacer"></div><div class="connection-panel"><div class="connection-title">DEVICE CONNECTION</div><div class="connection-row"><span>ESP32</span><b>Demo mode</b></div><div class="connection-row"><span>Python AI</span><b class="muted">Demo mode</b></div></div><div class="sidebar-version">KSafe AI <span>v1.0.0</span></div></aside><main class="main-content"><header class="topbar"><div class="breadcrumbs"><span>Workspace</span><i data-lucide="chevron-right"></i><strong>Analytics</strong></div><div class="topbar-actions"><span class="environment-pill">LOCAL ENVIRONMENT</span><div class="avatar">KS</div></div></header><section class="page-content"><div class="page-heading"><div><div class="eyebrow">SYSTEM ANALYTICS</div><h1>Analytics</h1><p>Session-level safety indicators and event distribution.</p></div><span class="demo-badge">DEMO DATA</span></div><div class="metric-grid"><article class="metric-card"><div class="metric-top">DROWSINESS EVENTS</div><div class="metric-value">02</div><div class="metric-foot">Demo session</div></article><article class="metric-card"><div class="metric-top">DISTRACTION EVENTS</div><div class="metric-value">01</div><div class="metric-foot">Demo session</div></article><article class="metric-card"><div class="metric-top">SAFE TIME</div><div class="metric-value">92%</div><div class="metric-foot">Illustrative data</div></article><article class="metric-card"><div class="metric-top">SESSION UPTIME</div><div class="metric-value">00:24</div><div class="metric-foot">Demo session</div></article></div><article class="panel" style="padding:20px;margin-top:15px"><h3>Alert distribution</h3><div style="display:flex;gap:8px;height:18px;margin:22px 0"><span style="width:65%;background:#16a34a;border-radius:4px"></span><span style="width:23%;background:#eab308;border-radius:4px"></span><span style="width:12%;background:#dc2626;border-radius:4px"></span></div><p class="subtle">SAFE 65% · FOCUS 23% · DANGER 12% — demo values</p></article></section></main></div><script>lucide.createIcons();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Analytics · KSafe AI</title>
+  <meta name="description" content="Detection statistics, uptime and driver state distribution">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="analytics" data-title="Analytics" data-base="../">
+
+  <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
+  <main id="page">
+
+    <div class="page-head">
+      <div>
+        <h2>Analytics</h2>
+        <p>Detection counts, uptime and the share of time spent in each driver state.</p>
+      </div>
+      <div class="card__actions">
+        <span data-source-tag></span>
+        <div class="segmented" role="group" aria-label="Time range" id="range">
+          <button type="button" data-range="1" aria-pressed="false">Today</button>
+          <button type="button" data-range="7" aria-pressed="true">7 days</button>
+          <button type="button" data-range="14" aria-pressed="false">14 days</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="kpi-row" aria-label="Key figures">
+      <div class="card kpi"><div class="kpi__label"><i data-icon="moon" data-size="14"></i>Drowsiness detections</div><div class="kpi__value" id="k-drowsy">0</div><div class="kpi__note">Eye closure + drowsiness events</div></div>
+      <div class="card kpi"><div class="kpi__label"><i data-icon="eye-off" data-size="14"></i>Distraction detections</div><div class="kpi__value" id="k-distract">0</div><div class="kpi__note">Distraction + head pose events</div></div>
+      <div class="card kpi"><div class="kpi__label"><i data-icon="clock" data-size="14"></i>Active time</div><div class="kpi__value" id="k-active">0<small> h</small></div><div class="kpi__note" id="k-active-note">&nbsp;</div></div>
+      <div class="card kpi"><div class="kpi__label"><i data-icon="shield-check" data-size="14"></i>Safe ratio</div><div class="kpi__value" id="k-safe">—</div><div class="kpi__note">Share of active time in SAFE</div></div>
+    </section>
+
+    <section class="an-grid">
+      <article class="card">
+        <div class="card__header">
+          <h3 class="card__title"><i data-icon="bar-chart" data-size="18"></i>Alerts over time</h3>
+          <div class="card__actions"><div class="legend"><span><i style="background:#2563EB"></i>Drowsiness</span><span><i style="background:#0F172A"></i>Distraction</span></div></div>
+        </div>
+        <div class="card__body"><div id="chart-alerts"></div></div>
+      </article>
+
+      <article class="card">
+        <div class="card__header"><h3 class="card__title"><i data-icon="gauge" data-size="18"></i>State distribution</h3></div>
+        <div class="card__body">
+          <div class="donut-wrap">
+            <div id="chart-donut"></div>
+            <div class="donut-legend" id="donut-legend"></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="an-grid an-grid--even">
+      <article class="card">
+        <div class="card__header"><h3 class="card__title"><i data-icon="activity" data-size="18"></i>Active hours per day</h3><div class="card__actions"><span class="card__sub" id="active-sub"></span></div></div>
+        <div class="card__body"><div id="chart-active"></div></div>
+      </article>
+
+      <article class="card">
+        <div class="card__header"><h3 class="card__title"><i data-icon="clock" data-size="18"></i>Uptime statistics</h3></div>
+        <div class="stat-list" id="uptime-stats"></div>
+      </article>
+    </section>
+
+  </main>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/lang/vi.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/charts.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/analytics.js"></script>
+</body>
+</html>

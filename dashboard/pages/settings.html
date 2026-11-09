@@ -1,1 +1,182 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSafe AI | Settings</title><link rel="stylesheet" href="../assets/css/variables.css"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/dashboard.css"><link rel="stylesheet" href="../assets/css/responsive.css"><script src="https://unpkg.com/lucide@latest"></script></head><body><div class="app-shell"><aside class="sidebar"><a class="brand" href="../index.html"><span class="brand-mark"><i data-lucide="shield-check"></i></span><span><strong>KSafe<span> AI</span></strong><small>DRIVER SAFETY SYSTEM</small></span></a><div class="side-label">WORKSPACE</div><nav class="nav-list"><a class="nav-link" href="../index.html"><i data-lucide="layout-dashboard"></i>Overview</a><a class="nav-link" href="monitoring.html"><i data-lucide="scan-eye"></i>Live Monitoring</a><a class="nav-link " href="devices.html"><i data-lucide="cpu"></i>Device Management</a><a class="nav-link " href="alerts.html"><i data-lucide="bell"></i>Alert History</a><a class="nav-link " href="analytics.html"><i data-lucide="chart-no-axes-combined"></i>Analytics</a></nav><div class="side-label side-label-bottom">PREFERENCES</div><nav class="nav-list"><a class="nav-link active" href="settings.html"><i data-lucide="settings-2"></i>Settings</a></nav><div class="sidebar-spacer"></div><div class="connection-panel"><div class="connection-title">DEVICE CONNECTION</div><div class="connection-row"><span>ESP32</span><b>Demo mode</b></div><div class="connection-row"><span>Python AI</span><b class="muted">Demo mode</b></div></div><div class="sidebar-version">KSafe AI <span>v1.0.0</span></div></aside><main class="main-content"><header class="topbar"><div class="breadcrumbs"><span>Workspace</span><i data-lucide="chevron-right"></i><strong>Settings</strong></div><div class="topbar-actions"><span class="environment-pill">LOCAL ENVIRONMENT</span><div class="avatar">KS</div></div></header><section class="page-content"><div class="page-heading"><div><div class="eyebrow">CONFIGURATION</div><h1>Settings</h1><p>Configure local ESP32 endpoint and dashboard preferences.</p></div><span class="demo-badge">DEMO DATA</span></div><article class="panel" style="padding:20px;max-width:650px"><h3>ESP32 connection</h3><p class="subtle">Enter the ESP32 base URL on your local network. The dashboard will only show ONLINE after a real API response.</p><form id="settingsForm" style="display:grid;gap:12px;margin-top:18px"><label>ESP32 Base URL<input id="espUrl" type="url" value="http://192.168.1.50" required style="display:block;width:100%;padding:11px;border:1px solid #e2e8f0;border-radius:7px;margin-top:7px"></label><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="button button-secondary" type="submit" style="width:max-content">Save endpoint</button><button class="button button-primary" type="button" id="testConnectionButton">Test connection</button></div><span class="subtle" id="saveMessage">Stored locally in this browser.</span><span class="subtle" id="connectionResult" role="status">Not tested yet.</span></form></article></section></main></div><script>lucide.createIcons();</script><script src="../assets/js/api.js"></script><script>const f=document.getElementById("settingsForm");if(f){const i=document.getElementById("espUrl");i.value=localStorage.getItem("ksafe_esp32_url")||i.value;f.addEventListener("submit",e=>{e.preventDefault();KSafeAPI.setBaseUrl(i.value);document.getElementById("saveMessage").textContent="Endpoint saved: "+i.value;});const test=document.getElementById("testConnectionButton");test.addEventListener("click",async()=>{KSafeAPI.setBaseUrl(i.value);const result=document.getElementById("connectionResult");result.textContent="Connecting...";try{const data=await KSafeAPI.getStatus();if(!data||!["S","F","D"].includes(data.state))throw new Error("Invalid API response");result.textContent="Connected · ESP32 state: "+({S:"SAFE",F:"FOCUS",D:"DANGER"}[data.state]);result.style.color="#15803d";}catch(error){result.textContent="Connection failed · Check ESP32 power, Wi-Fi, IP address and CORS.";result.style.color="#dc2626";}});}</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings · KSafe AI</title>
+  <meta name="description" content="Connection, camera and detection threshold configuration">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="settings" data-title="Settings" data-base="../">
+
+  <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
+  <main id="page">
+
+    <div class="page-head">
+      <div>
+        <h2>Settings</h2>
+        <p>Connection addresses, camera source and detection thresholds. Saved in this browser.</p>
+      </div>
+    </div>
+
+    <form class="settings-layout" id="settings-form" novalidate autocomplete="off">
+      <div class="settings-sections">
+
+        <section class="card">
+          <div class="card__header"><h3 class="card__title"><i data-icon="activity" data-size="18"></i>Data source</h3></div>
+          <div class="card__body stack">
+            <div class="segmented" role="group" aria-label="Data source" id="seg-mode">
+              <button type="button" data-mode="demo" aria-pressed="true">DEMO data</button>
+              <button type="button" data-mode="real" aria-pressed="false">REAL data</button>
+            </div>
+            <div class="field__hint" id="mode-hint"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__header"><h3 class="card__title"><i data-icon="plug" data-size="18"></i>Connection</h3></div>
+          <div class="card__body stack">
+            <div class="form-grid">
+              <div class="field">
+                <label for="esp32Ip">ESP32 IP address</label>
+                <div class="input-group"><input class="input mono" id="esp32Ip" name="esp32Ip" type="text" spellcheck="false" placeholder="192.168.1.50"><span class="input-group__addon">http://</span></div>
+                <div class="field__error" data-err="esp32Ip" hidden></div>
+              </div>
+              <div class="field">
+                <label for="apiEndpoint">API endpoint (Python AI service)</label>
+                <input class="input mono" id="apiEndpoint" name="apiEndpoint" type="text" spellcheck="false" placeholder="http://localhost:8000">
+                <div class="field__error" data-err="apiEndpoint" hidden></div>
+              </div>
+              <div class="field">
+                <label for="pollIntervalMs">Polling interval</label>
+                <select class="select" id="pollIntervalMs" name="pollIntervalMs"><option value="500">500 ms</option><option value="1000">1 second</option><option value="2000">2 seconds</option><option value="5000">5 seconds</option></select>
+              </div>
+              <div class="field">
+                <label for="requestTimeoutMs">Request timeout</label>
+                <div class="input-group"><input class="input mono" id="requestTimeoutMs" name="requestTimeoutMs" type="number" min="500" max="10000" step="100"><span class="input-group__addon">ms</span></div>
+                <div class="field__error" data-err="requestTimeoutMs" hidden></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn" type="button" id="btn-test-esp"><i data-icon="zap" data-size="16"></i>Test ESP32</button>
+              <button class="btn" type="button" id="btn-test-ai"><i data-icon="zap" data-size="16"></i>Test AI service</button>
+            </div>
+            <div class="test-result" id="test-result" hidden></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__header"><h3 class="card__title"><i data-icon="camera" data-size="18"></i>Camera configuration</h3></div>
+          <div class="card__body stack">
+            <div class="form-grid">
+              <div class="field">
+                <label for="cameraSource">Camera source</label>
+                <select class="select" id="cameraSource" name="cameraSource">
+                  <option value="none">None (placeholder)</option>
+                  <option value="stream">MJPEG stream from Python service</option>
+                  <option value="webcam">Browser webcam (localhost / HTTPS only)</option>
+                </select>
+              </div>
+              <div class="field" id="row-stream">
+                <label for="cameraStreamUrl">Stream URL</label>
+                <input class="input mono" id="cameraStreamUrl" name="cameraStreamUrl" type="text" spellcheck="false" placeholder="http://localhost:8000/video_feed">
+                <div class="field__error" data-err="cameraStreamUrl" hidden></div>
+              </div>
+              <div class="field">
+                <label for="cameraResolution">Resolution</label>
+                <select class="select" id="cameraResolution" name="cameraResolution"><option>640x480</option><option>1280x720</option><option>1920x1080</option></select>
+                <div class="field__hint">Used for the browser webcam.</div>
+              </div>
+              <div class="field">
+                <label for="cameraFps">Target frame rate</label>
+                <select class="select" id="cameraFps" name="cameraFps"><option value="15">15 fps</option><option value="24">24 fps</option><option value="30">30 fps</option><option value="60">60 fps</option></select>
+              </div>
+              <div class="field full">
+                <div class="switch-row">
+                  <div><strong>Mirror video</strong><span>Flip horizontally, like a rear-view mirror.</span></div>
+                  <label class="switch"><input type="checkbox" id="cameraMirror" name="cameraMirror" aria-label="Mirror video"><span class="switch__track"></span></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card__header"><h3 class="card__title"><i data-icon="gauge" data-size="18"></i>Detection thresholds</h3></div>
+          <div class="card__body stack">
+            <div class="form-grid">
+              <div class="field full">
+                <label for="earThreshold">EAR threshold</label>
+                <div class="range-row"><input class="range" type="range" data-key="earThreshold" min="0.10" max="0.40" step="0.01" aria-label="EAR threshold slider"><div class="input-group"><input class="input mono" id="earThreshold" name="earThreshold" data-key="earThreshold" type="number" min="0.10" max="0.40" step="0.01"></div></div>
+                <div class="field__hint">Eyes count as closed when the Eye Aspect Ratio drops below this value. Typical range 0.18 – 0.25.</div>
+                <div class="field__error" data-err="earThreshold" hidden></div>
+              </div>
+              <div class="field full">
+                <label for="drowsySeconds">Drowsiness detection duration</label>
+                <div class="range-row"><input class="range" type="range" data-key="drowsySeconds" min="0.5" max="5" step="0.5" aria-label="Drowsiness duration slider"><div class="input-group"><input class="input mono" id="drowsySeconds" name="drowsySeconds" data-key="drowsySeconds" type="number" min="0.5" max="5" step="0.5"><span class="input-group__addon">s</span></div></div>
+                <div class="field__hint">Eyes closed continuously for this long raises DANGER.</div>
+                <div class="field__error" data-err="drowsySeconds" hidden></div>
+              </div>
+              <div class="field">
+                <label for="distractionYaw">Distraction threshold – yaw</label>
+                <div class="input-group"><input class="input mono" id="distractionYaw" name="distractionYaw" type="number" min="10" max="60" step="1"><span class="input-group__addon">± °</span></div>
+                <div class="field__hint">Head turned left / right beyond this angle.</div>
+                <div class="field__error" data-err="distractionYaw" hidden></div>
+              </div>
+              <div class="field">
+                <label for="distractionPitch">Distraction threshold – pitch</label>
+                <div class="input-group"><input class="input mono" id="distractionPitch" name="distractionPitch" type="number" min="10" max="60" step="1"><span class="input-group__addon">± °</span></div>
+                <div class="field__hint">Head tilted up / down beyond this angle.</div>
+                <div class="field__error" data-err="distractionPitch" hidden></div>
+              </div>
+              <div class="field full">
+                <label for="distractionSeconds">Distraction duration</label>
+                <div class="range-row"><input class="range" type="range" data-key="distractionSeconds" min="1" max="10" step="0.5" aria-label="Distraction duration slider"><div class="input-group"><input class="input mono" id="distractionSeconds" name="distractionSeconds" data-key="distractionSeconds" type="number" min="1" max="10" step="0.5"><span class="input-group__addon">s</span></div></div>
+                <div class="field__hint">Looking away continuously for this long raises DANGER.</div>
+                <div class="field__error" data-err="distractionSeconds" hidden></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="settings-aside">
+        <section class="card">
+          <div class="savebar">
+            <div class="savebar__state" id="save-state" data-dirty="false"><span class="dot dot--safe"></span><span>All changes saved</span></div>
+          </div>
+          <div class="card__body" style="padding-top:0;display:grid;gap:10px">
+            <button class="btn btn--primary" type="submit" id="btn-save"><i data-icon="save" data-size="16"></i>Save settings</button>
+            <button class="btn" type="button" id="btn-discard">Discard changes</button>
+            <button class="btn btn--ghost" type="button" id="btn-defaults"><i data-icon="rotate-ccw" data-size="14"></i>Restore defaults</button>
+          </div>
+        </section>
+        <div class="note"><i data-icon="info" data-size="16"></i><span>The dashboard uses these thresholds to classify driver state whenever the Python service does not send its own <code class="mono">state</code>. Keep them in sync with your Python configuration.</span></div>
+        <section class="card">
+          <div class="card__header"><h3 class="card__title"><i data-icon="trash" data-size="18"></i>Stored data</h3></div>
+          <div class="card__body" style="display:grid;gap:10px">
+            <p class="muted" style="font-size:12.5px">Alerts and statistics are kept in this browser only.</p>
+            <button class="btn btn--sm" type="button" id="btn-clear-real">Clear REAL alert history</button>
+            <button class="btn btn--sm" type="button" id="btn-clear-demo">Clear DEMO session alerts</button>
+          </div>
+        </section>
+      </aside>
+    </form>
+
+  </main>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/lang/vi.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/charts.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/settings.js"></script>
+</body>
+</html>

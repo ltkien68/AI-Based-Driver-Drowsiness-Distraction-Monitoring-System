@@ -1,1 +1,62 @@
-<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KSafe AI | Alert History</title><link rel="stylesheet" href="../assets/css/variables.css"><link rel="stylesheet" href="../assets/css/style.css"><link rel="stylesheet" href="../assets/css/dashboard.css"><link rel="stylesheet" href="../assets/css/responsive.css"><script src="https://unpkg.com/lucide@latest"></script></head><body><div class="app-shell"><aside class="sidebar"><a class="brand" href="../index.html"><span class="brand-mark"><i data-lucide="shield-check"></i></span><span><strong>KSafe<span> AI</span></strong><small>DRIVER SAFETY SYSTEM</small></span></a><div class="side-label">WORKSPACE</div><nav class="nav-list"><a class="nav-link" href="../index.html"><i data-lucide="layout-dashboard"></i>Overview</a><a class="nav-link" href="monitoring.html"><i data-lucide="scan-eye"></i>Live Monitoring</a><a class="nav-link " href="devices.html"><i data-lucide="cpu"></i>Device Management</a><a class="nav-link active" href="alerts.html"><i data-lucide="bell"></i>Alert History</a><a class="nav-link " href="analytics.html"><i data-lucide="chart-no-axes-combined"></i>Analytics</a></nav><div class="side-label side-label-bottom">PREFERENCES</div><nav class="nav-list"><a class="nav-link " href="settings.html"><i data-lucide="settings-2"></i>Settings</a></nav><div class="sidebar-spacer"></div><div class="connection-panel"><div class="connection-title">DEVICE CONNECTION</div><div class="connection-row"><span>ESP32</span><b>Demo mode</b></div><div class="connection-row"><span>Python AI</span><b class="muted">Demo mode</b></div></div><div class="sidebar-version">KSafe AI <span>v1.0.0</span></div></aside><main class="main-content"><header class="topbar"><div class="breadcrumbs"><span>Workspace</span><i data-lucide="chevron-right"></i><strong>Alert History</strong></div><div class="topbar-actions"><span class="environment-pill">LOCAL ENVIRONMENT</span><div class="avatar">KS</div></div></header><section class="page-content"><div class="page-heading"><div><div class="eyebrow">EVENT LOG</div><h1>Alert History</h1><p>Review driver safety events and warning history.</p></div><span class="demo-badge">DEMO DATA</span></div><article class="panel table-panel"><div class="table-wrap"><table><thead><tr><th>TIME</th><th>EVENT</th><th>SEVERITY</th><th>STATUS</th></tr></thead><tbody><tr><td>14:29:42</td><td>Eye Closure</td><td><span class="severity warning">Warning</span></td><td>Detected</td></tr><tr><td>14:28:16</td><td>Drowsiness</td><td><span class="severity critical">Critical</span></td><td>Detected</td></tr><tr><td>14:25:10</td><td>Distraction</td><td><span class="severity warning">Warning</span></td><td>Resolved</td></tr></tbody></table></div></article></section></main></div><script>lucide.createIcons();</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alert History · KSafe AI</title>
+  <meta name="description" content="Search, filter and export driver alert history">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/css/variables.css">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/pages.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+</head>
+<body data-page="alerts" data-title="Alert History" data-base="../">
+
+  <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
+  <main id="page">
+
+    <div class="page-head">
+      <div>
+        <h2>Alert History</h2>
+        <p>Every drowsiness and distraction event detected by the system.</p>
+      </div>
+      <div class="card__actions">
+        <span data-source-tag></span>
+        <button class="btn btn--sm" type="button" id="btn-export"><i data-icon="download" data-size="14"></i>Export CSV</button>
+      </div>
+    </div>
+
+    <section class="kpi-row" aria-label="Alert summary">
+      <div class="card kpi"><div class="kpi__label"><i data-icon="bell" data-size="14"></i>Matching alerts</div><div class="kpi__value" id="k-total">0</div><div class="kpi__note" id="k-total-note">&nbsp;</div></div>
+      <div class="card kpi"><div class="kpi__label"><i data-icon="siren" data-size="14"></i>Critical</div><div class="kpi__value" id="k-crit">0</div><div class="kpi__note">Drowsiness / prolonged distraction</div></div>
+      <div class="card kpi"><div class="kpi__label"><i data-icon="alert-triangle" data-size="14"></i>Warning</div><div class="kpi__value" id="k-warn">0</div><div class="kpi__note">Early warnings</div></div>
+      <div class="card kpi"><div class="kpi__label"><i data-icon="activity" data-size="14"></i>Unresolved</div><div class="kpi__value" id="k-open">0</div><div class="kpi__note">Status still “Detected”</div></div>
+    </section>
+
+    <section class="card">
+      <form class="toolbar" id="filters" autocomplete="off" role="search">
+        <div class="field field--search"><label for="q">Search</label><div class="input-with-icon"><i data-icon="search" data-size="16"></i><input class="input" id="q" type="search" placeholder="Event, severity, details…"></div></div>
+        <div class="field"><label for="f-from">From date</label><input class="input" id="f-from" type="date"></div>
+        <div class="field"><label for="f-to">To date</label><input class="input" id="f-to" type="date"></div>
+        <div class="field"><label for="f-status">Status</label><select class="select" id="f-status"><option value="">All statuses</option><option value="Detected">Detected</option><option value="Resolved">Resolved</option></select></div>
+        <div class="field"><label for="f-sev">Severity</label><select class="select" id="f-sev"><option value="">All severities</option><option value="Critical">Critical</option><option value="Warning">Warning</option><option value="Normal">Normal</option></select></div>
+        <button class="btn" type="button" id="btn-reset-filters"><i data-icon="x" data-size="14"></i>Reset</button>
+      </form>
+      <div class="table-wrap" id="alert-table"></div>
+      <div class="pager" id="pager"></div>
+    </section>
+
+  </main>
+
+  <script src="../assets/js/icons.js"></script>
+  <script src="../assets/js/i18n.js"></script>
+  <script src="../assets/js/lang/vi.js"></script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/charts.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/alerts.js"></script>
+</body>
+</html>
