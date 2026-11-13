@@ -6,17 +6,12 @@
    Có 2 nguồn dữ liệu, KHÔNG BAO GIỜ trộn lẫn:
      • DEMO : dữ liệu mô phỏng tạo ngay trên trình duyệt, chỉ để hoàn thiện UI.
               Mọi màn hình đều gắn nhãn DEMO khi đang dùng nguồn này.
-     • REAL : đọc từ thiết bị thật. Nếu không kết nối được thì hiển thị Offline / "—",
-              tuyệt đối không bịa số liệu.
+     • REAL : nhận dữ liệu Python AI từ Mosquitto qua MQTT WebSocket. Nếu mất kết nối
+              hoặc heartbeat quá hạn thì hiển thị Offline / "—", tuyệt đối không bịa số liệu.
 
-   Hợp đồng API cho giai đoạn tích hợp (xem README.md để biết đầy đủ):
-     ESP32 (HTTP server trong LAN):
-        GET  http://<esp32-ip>/api/status        → trạng thái thiết bị (xem normalizeEsp32)
-        POST http://<esp32-ip>/api/state         → { "state": "SAFE|FOCUS|DANGER" }
-        POST http://<esp32-ip>/api/reset/ack     → xác nhận đã reset cảnh báo
-     Python AI (OpenCV + MediaPipe):
-        GET  <apiEndpoint>/api/ai/status         → số đo realtime (xem normalizeAI)
-        GET  <apiEndpoint>/video_feed            → MJPEG stream (tuỳ chọn, dùng cho camera)
+   Python AI Engine nhận diện bằng OpenCV + MediaPipe, gửi lệnh điều khiển Arduino Uno
+   qua Serial. Dashboard nhận telemetry AI qua MQTT; hiện chưa có topic phản hồi độc lập
+   từ Arduino nên không tự suy ra Arduino đang online/offline.
 
    Muốn thêm WebSocket: viết một source mới có cùng giao diện { start(), stop() } rồi
    gọi KSafe.ingest(snapshot) mỗi khi có dữ liệu — phần UI không cần thay đổi.
@@ -88,10 +83,6 @@
   var SETTINGS_KEY = 'ksafe.settings.v1';
   var DEFAULTS = {
     mode: 'demo',                       // 'demo' | 'real'
-    esp32Ip: '192.168.1.50',
-    apiEndpoint: 'http://localhost:8000',
-    pollIntervalMs: 1000,
-    requestTimeoutMs: 2500,
     cameraSource: 'none',               // 'none' | 'stream' | 'webcam'
     cameraStreamUrl: 'http://localhost:8000/video_feed',
     cameraResolution: '640x480',
@@ -271,54 +262,18 @@
   };
 
   /* ------------------------------------------------------------------ */
-  /* HTTP helper                                                         */
-  /* ------------------------------------------------------------------ */
-  function baseUrl(host) {
-    host = String(host || '').trim().replace(/\/+$/, '');
-    if (!host) return '';
-    return /^https?:\/\//i.test(host) ? host : 'http://' + host;
-  }
-  function http(url, opts) {
-    opts = opts || {};
-    var timeout = opts.timeout || KS.settings.get().requestTimeoutMs;
-    var ctrl = new AbortController();
-    var timer = setTimeout(function () { ctrl.abort(); }, timeout);
-    var t0 = performance.now();
-    return fetch(url, {
-      method: opts.method || 'GET',
-      headers: opts.body ? { 'Content-Type': 'application/json' } : undefined,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
-      signal: ctrl.signal, cache: 'no-store'
-    }).then(function (res) {
-      var ms = Math.round(performance.now() - t0);
-      if (!res.ok) return { ok: false, status: res.status, ms: ms, error: 'HTTP ' + res.status };
-      return res.text().then(function (txt) {
-        var data = null;
-        try { data = txt ? JSON.parse(txt) : null; } catch (e) { data = txt; }
-        return { ok: true, status: res.status, ms: ms, data: data };
-      });
-    }).catch(function (err) {
-      var aborted = err && err.name === 'AbortError';
-      return { ok: false, ms: Math.round(performance.now() - t0),
-        error: aborted ? 'Timeout after ' + timeout + ' ms' : 'Network error – device offline, wrong address, or CORS not enabled on the device' };
-    }).then(function (r) { clearTimeout(timer); return r; });
-  }
-
-  /* ------------------------------------------------------------------ */
   /* Snapshot shape                                                      */
   /* ------------------------------------------------------------------ */
   function emptyAI() {
     return { online: false, mediapipe: null, fps: null, camera: null, faceDetected: null, faceBox: null,
       ear: null, pitch: null, yaw: null, roll: null, gaze: null, state: null, drowsy: null, distracted: null };
   }
-  function emptyESP() {
-    return { connected: false, ip: null, deviceId: null, firmware: null, uptimeSec: null, responseMs: null, state: null,
-      wifi: { connected: null, ssid: null, rssi: null },
-      led: { color: null }, buzzer: { active: null }, oled: { ok: null, text: null }, lcd: { ok: null, text: null },
-      button: { resetPending: null } };
+  function emptyArduino() {
+    return { board: 'Arduino Uno', transport: 'Serial qua Python AI Engine',
+      telemetry: false, status: 'NOT_REPORTED' };
   }
   function emptySnapshot(mode) {
-    return { mode: mode, ts: Date.now(), pending: true, ai: emptyAI(), esp32: emptyESP(), errors: {}, driver: null };
+    return { mode: mode, ts: Date.now(), pending: true, ai: emptyAI(), arduino: emptyArduino(), errors: {}, driver: null };
   }
 
   /* ------------------------------------------------------------------ */
@@ -365,27 +320,23 @@
         snap.ts = now; snap.pending = false;
         snap.ai = Object.assign(emptyAI(), { online: true, mediapipe: 'Tracking', fps: m.fps, camera: 'demo', faceDetected: true,
           ear: m.ear, pitch: m.pitch, yaw: m.yaw, roll: m.roll, gaze: m.gaze });
-        var up = 5025 + (now - KS.sessionStart()) / 1000;
-        snap.esp32 = Object.assign(emptyESP(), { connected: true, ip: '192.168.1.50', deviceId: 'KSAFE-ESP32-DEMO', firmware: 'v0.1.0-demo',
-          uptimeSec: up, responseMs: 18 + Math.round(noise(now / 1000, 2) * 5),
-          wifi: { connected: true, ssid: 'KSafe-LAN', rssi: Math.round(-58 + noise(now / 1000, .4) * 3) } });
+        snap.arduino = Object.assign(emptyArduino(), { telemetry: true, status: 'DEMO' });
         return snap;
       },
-      /* Trạng thái thiết bị ngoại vi mô phỏng suy ra từ trạng thái tài xế */
+      /* Ngoại vi Arduino chỉ mô phỏng trong DEMO; REAL chưa có telemetry phản hồi. */
       fillDevices: function (snap) {
-        var s = snap.driver.state, e = snap.esp32;
-        e.state = s;
-        e.led = { color: s === 'SAFE' ? 'green' : s === 'FOCUS' ? 'yellow' : 'red' };
-        e.buzzer = { active: s === 'DANGER' };
-        e.oled = { ok: true, text: s };
-        e.lcd = { ok: true, text: 'KSAFE AI | ' + s };
-        e.button = { resetPending: s === 'DANGER' };
+        snap.arduino = Object.assign(emptyArduino(), { telemetry: true, status: 'DEMO',
+          state: snap.driver.state,
+          led: snap.driver.state === 'SAFE' ? 'GREEN' : snap.driver.state === 'FOCUS' ? 'YELLOW' : 'RED',
+          buzzer: snap.driver.state === 'DANGER',
+          vibration: snap.driver.state === 'DANGER',
+          lcd: 'KSAFE AI | ' + snap.driver.state });
       }
     };
   })();
 
   /* ------------------------------------------------------------------ */
-  /* REAL source – ESP32 + Python AI                                     */
+  /* REAL source – MQTT telemetry từ Python AI Engine                     */
   /* ------------------------------------------------------------------ */
   function dig(obj, path) {
     return path.split('.').reduce(function (o, k) { return o == null ? undefined : o[k]; }, obj);
@@ -395,32 +346,6 @@
     return null;
   }
   var num = function (v) { return v == null || v === '' || isNaN(+v) ? null : +v; };
-
-  /* Chuẩn hoá JSON của ESP32 /api/status. Chấp nhận nhiều cách đặt tên field;
-     field nào thiết bị không gửi sẽ là null và UI hiển thị "Unknown", không bịa. */
-  KS.normalizeEsp32 = function (j, base) {
-    var e = emptyESP();
-    j = j || {};
-    e.connected = true;
-    e.deviceId = firstOf(j, ['device_id', 'deviceId', 'id']);
-    e.firmware = firstOf(j, ['firmware', 'firmware_version', 'fw', 'version']);
-    e.ip = firstOf(j, ['ip', 'ip_address', 'wifi.ip']) || String(base || '').replace(/^https?:\/\//, '');
-    e.uptimeSec = num(firstOf(j, ['uptime_s', 'uptime', 'uptimeSec']));
-    e.state = firstOf(j, ['state', 'driver_state']);
-    var wc = firstOf(j, ['wifi.connected', 'wifi_connected']);
-    e.wifi = { connected: wc === null ? true : !!wc, // nhận được phản hồi qua mạng ⇒ thiết bị đang có mạng
-      ssid: firstOf(j, ['wifi.ssid', 'ssid']), rssi: num(firstOf(j, ['wifi.rssi', 'rssi'])) };
-    var led = firstOf(j, ['led.color', 'led_color', 'led']);
-    e.led = { color: typeof led === 'string' ? led.toLowerCase() : null };
-    var bz = firstOf(j, ['buzzer.active', 'buzzer_on', 'buzzer']);
-    e.buzzer = { active: bz === null ? null : !!bz };
-    var oledOk = firstOf(j, ['oled.ok', 'oled_ok']), lcdOk = firstOf(j, ['lcd.ok', 'lcd_ok']);
-    e.oled = { ok: oledOk === null ? null : !!oledOk, text: firstOf(j, ['oled.text', 'oled_text']) };
-    e.lcd = { ok: lcdOk === null ? null : !!lcdOk, text: firstOf(j, ['lcd.text', 'lcd_text']) };
-    var rp = firstOf(j, ['button.reset_pending', 'reset_pending', 'button.pressed']);
-    e.button = { resetPending: rp === null ? null : !!rp };
-    return e;
-  };
 
   /* Chuẩn hoá JSON của Python AI /api/ai/status */
   KS.normalizeAI = function (j) {
@@ -448,24 +373,6 @@
     return a;
   };
 
-  var Real = {
-    poll: function () {
-      var s = KS.settings.get();
-      var espBase = baseUrl(s.esp32Ip), aiBase = baseUrl(s.apiEndpoint);
-      var pEsp = espBase ? http(espBase + '/api/status') : Promise.resolve({ ok: false, error: 'ESP32 IP address not configured' });
-      var pAi = aiBase ? http(aiBase + '/api/ai/status') : Promise.resolve({ ok: false, error: 'API endpoint not configured' });
-      return Promise.all([pEsp, pAi]).then(function (res) {
-        var snap = emptySnapshot('real');
-        snap.pending = false;
-        if (res[0].ok) { snap.esp32 = KS.normalizeEsp32(res[0].data, espBase); snap.esp32.responseMs = res[0].ms; }
-        else { snap.errors.esp32 = res[0].error; if (espBase) snap.esp32.ip = espBase.replace(/^https?:\/\//, ''); }
-        if (res[1].ok) snap.ai = KS.normalizeAI(res[1].data);
-        else snap.errors.ai = res[1].error;
-        return snap;
-      });
-    }
-  };
-
   /* ------------------------------------------------------------------ */
   /* Phân loại trạng thái tài xế + ghi cảnh báo khi trạng thái đổi       */
   /* ------------------------------------------------------------------ */
@@ -488,7 +395,7 @@
       d.distracted = ai.distracted !== null ? ai.distracted : d.awayFor >= s.distractionSeconds;
 
       var noFace = ai.faceDetected === false;
-      if (ai.state === 'SAFE' || ai.state === 'FOCUS' || ai.state === 'DANGER') d.state = ai.state; // Python quyết định → ưu tiên
+      if (ai.state === 'SAFE' || ai.state === 'FOCUS' || ai.state === 'DANGER' || ai.state === 'UNKNOWN') d.state = ai.state; // Trang thai tu Python la nguon quyet dinh
       else d.state = (d.drowsy || d.distracted) ? 'DANGER' : (d.eyesClosed || d.lookingAway || noFace) ? 'FOCUS' : 'SAFE';
       d.cause = (d.drowsy || d.eyesClosed) ? 'drowsiness' : (d.distracted || d.lookingAway) ? 'distraction' : noFace ? 'noface' : null;
     } else {
@@ -519,12 +426,13 @@
   /* ------------------------------------------------------------------ */
   /* Engine                                                              */
   /* ------------------------------------------------------------------ */
-  var latest = null, timer = null, busy = false, lastTick = 0, started = false, epoch = 0;
+  var latest = null, timer = null, lastTick = 0, started = false, epoch = 0;
 
   function finalize(snap) {
     var now = Date.now();
     snap.driver = deriveDriver(snap, now);
     if (snap.mode === 'demo') Demo.fillDevices(snap);
+    else if (!snap.arduino) snap.arduino = emptyArduino();
     snap.alertsSession = KS.alerts.sessionCount(snap.mode);
     var dt = lastTick ? Math.min(2, (now - lastTick) / 1000) : 0;
     lastTick = now;
@@ -541,21 +449,19 @@
   function tick(myEpoch) {
     if (myEpoch !== epoch) return;
     var s = KS.settings.get();
-    var next = function () { if (myEpoch === epoch) timer = setTimeout(function () { tick(myEpoch); }, Math.max(500, s.pollIntervalMs)); };
+    var next = function () { if (myEpoch === epoch) timer = setTimeout(function () { tick(myEpoch); }, 500); };
     if (s.mode === 'demo') { KS.ingest(Demo.snapshot(Date.now())); next(); return; }
-    if (busy) { next(); return; }
-    busy = true;
-    Real.poll().then(function (snap) { if (myEpoch === epoch) KS.ingest(snap); })
-      .catch(function (e) { console.error('[KSafe] poll error', e); })
-      .then(function () { busy = false; next(); });
+    /* REAL duoc cap nhat hoan toan tu MQTT; khong polling HTTP/thiet bi. */
+    if (KS.mqtt) KS.mqtt.start();
   }
 
   KS.start = function () {
     if (started) return;
     started = true;
     var restart = function () {
-      epoch++; clearTimeout(timer); busy = false; lastTick = 0;
+      epoch++; clearTimeout(timer); lastTick = 0;
       latest = null;
+      if (KS.mode() === 'demo' && KS.mqtt) KS.mqtt.stop();
       if (KS.mode() === 'real') { latest = finalize(emptySnapshot('real')); KS.bus.emit('snapshot', latest); }
       tick(epoch);
     };
@@ -566,52 +472,11 @@
   KS.snapshot = function () { return latest; };
   KS.onSnapshot = function (fn) { if (latest) fn(latest); return KS.bus.on('snapshot', fn); };
 
-  /* ------------------------------------------------------------------ */
-  /* Commands gửi tới ESP32 (POST /api/state, POST /api/reset/ack)       */
-  /* ------------------------------------------------------------------ */
-  var CMD_KEY = 'ksafe.commands';
+  /* Arduino Uno nhận lệnh điều khiển qua Serial từ Python AI Engine.
+     Dashboard chưa gửi lệnh trực tiếp tới Arduino. */
   KS.commands = {
-    list: function () { return util.load(sessionStorage, CMD_KEY, []); },
-    push: function (entry) {
-      var l = KS.commands.list(); l.unshift(entry);
-      util.save(sessionStorage, CMD_KEY, l.slice(0, 30));
-      KS.bus.emit('commands', entry);
-    }
+    list: function () { return []; },
+    push: function () {}
   };
-
-  function runCommand(method, path, body) {
-    var mode = KS.mode(), s = KS.settings.get(), t = Date.now();
-    var finish = function (r) {
-      var entry = { ts: t, method: method, path: path, body: body || null, mode: mode, ok: r.ok, message: r.message };
-      KS.commands.push(entry);
-      return entry;
-    };
-    if (mode === 'demo') {
-      return Promise.resolve(finish({ ok: true, message: 'DEMO – not sent to hardware' }));
-    }
-    var base = baseUrl(s.esp32Ip);
-    if (!base) return Promise.resolve(finish({ ok: false, message: 'ESP32 IP address not configured' }));
-    return http(base + path, { method: method, body: body }).then(function (r) {
-      return finish({ ok: r.ok, message: r.ok ? 'HTTP ' + r.status + ' · ' + r.ms + ' ms' : r.error });
-    });
-  }
-
-  KS.api = {
-    sendState: function (state) { return runCommand('POST', '/api/state', { state: state }); },
-    ackReset: function () { return runCommand('POST', '/api/reset/ack', {}); },
-    /* Kiểm tra kết nối thật (dùng cả khi đang ở chế độ DEMO để người dùng thử trước khi chuyển sang REAL) */
-    testEsp32: function (host) {
-      var base = baseUrl(host);
-      if (!base) return Promise.resolve({ ok: false, error: 'Enter an IP address first' });
-      return http(base + '/api/status').then(function (r) {
-        if (r.ok) r.device = KS.normalizeEsp32(r.data, base);
-        return r;
-      });
-    },
-    testAI: function (endpoint) {
-      var base = baseUrl(endpoint);
-      if (!base) return Promise.resolve({ ok: false, error: 'Enter an API endpoint first' });
-      return http(base + '/api/ai/status');
-    }
-  };
+  KS.api = {};
 })(window);

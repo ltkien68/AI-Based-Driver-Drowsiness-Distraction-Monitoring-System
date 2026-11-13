@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Device Management · KSafe AI</title>
-  <meta name="description" content="ESP32 device information, connection and peripherals">
+  <meta name="description" content="Arduino Uno controller and KSafe AI hardware peripherals">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="../assets/css/variables.css">
   <link rel="stylesheet" href="../assets/css/style.css">
@@ -12,107 +12,47 @@
   <link rel="stylesheet" href="../assets/css/pages.css">
   <link rel="stylesheet" href="../assets/css/responsive.css">
 </head>
-<body data-page="devices" data-title="Device Management" data-base="../">
-
-  <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
+<body data-page="devices" data-title="Quản lý thiết bị" data-base="../">
   <main id="page">
-
     <div class="page-head">
       <div>
-        <h2>Device Management</h2>
-        <p>ESP32 node on the local network: identity, connection, peripherals and API commands.</p>
+        <h2>Quản lý thiết bị</h2>
+        <p>Arduino Uno điều khiển các thiết bị cảnh báo thông qua Serial từ Python AI Engine.</p>
       </div>
-      <div class="card__actions">
-        <span data-source-tag></span>
-        <button class="btn btn--sm" type="button" id="btn-refresh"><i data-icon="refresh" data-size="14"></i>Refresh now</button>
-      </div>
+      <div class="card__actions"><span data-source-tag></span><button class="btn btn--sm" type="button" id="btn-refresh"><i data-icon="refresh" data-size="14"></i>Làm mới</button></div>
     </div>
 
     <section class="dev-grid">
       <article class="card">
         <div class="card__header">
-          <h3 class="card__title"><i data-icon="cpu" data-size="18"></i>ESP32 Information</h3>
+          <h3 class="card__title"><i data-icon="cpu" data-size="18"></i>Arduino Uno</h3>
           <div class="card__actions" id="dev-conn-badge"></div>
         </div>
-        <div class="info-list" id="dev-info"></div>
+        <div class="card__body">
+          <div class="info-list" id="dev-info"></div>
+        </div>
       </article>
 
       <article class="card">
         <div class="card__header">
-          <h3 class="card__title"><i data-icon="plug" data-size="18"></i>Connection Settings</h3>
+          <h3 class="card__title"><i data-icon="workflow" data-size="18"></i>Luồng điều khiển</h3>
         </div>
-        <form class="card__body stack" id="conn-form" novalidate>
-          <div class="form-grid">
-            <div class="field full">
-              <label for="f-ip">ESP32 IP address</label>
-              <div class="input-group"><input class="input mono" id="f-ip" name="esp32Ip" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="192.168.1.50"><span class="input-group__addon">http://</span></div>
-              <div class="field__hint">The ESP32 runs an HTTP server on the LAN. A fixed or reserved IP is recommended.</div>
-              <div class="field__error" id="err-ip" hidden></div>
-            </div>
-            <div class="field">
-              <label for="f-poll">Polling interval</label>
-              <select class="select" id="f-poll" name="pollIntervalMs">
-                <option value="500">500 ms</option><option value="1000">1 second</option><option value="2000">2 seconds</option><option value="5000">5 seconds</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="f-timeout">Request timeout</label>
-              <div class="input-group"><input class="input mono" id="f-timeout" name="requestTimeoutMs" type="number" min="500" max="10000" step="100"><span class="input-group__addon">ms</span></div>
-              <div class="field__error" id="err-timeout" hidden></div>
-            </div>
-          </div>
-          <div class="form-actions">
-            <button class="btn btn--primary" type="submit"><i data-icon="save" data-size="16"></i>Save</button>
-            <button class="btn" type="button" id="btn-test"><i data-icon="zap" data-size="16"></i>Test connection</button>
-          </div>
-          <div class="test-result" id="test-result" hidden></div>
-          <div class="note"><i data-icon="info" data-size="16"></i><span>The test always contacts the real device, even while the dashboard is in DEMO mode. The ESP32 firmware must reply with the header <code class="mono">Access-Control-Allow-Origin: *</code> so the browser can read <code class="mono">/api/status</code>.</span></div>
-        </form>
+        <div class="card__body stack">
+          <div class="kv"><span>Nhận diện</span><strong>Python AI Engine</strong></div>
+          <div class="kv"><span>Giao tiếp phần cứng</span><strong>Serial</strong></div>
+          <div class="kv"><span>Vi điều khiển</span><strong>Arduino Uno</strong></div>
+          <div class="note"><i data-icon="info" data-size="16"></i><span>Python gửi trạng thái SAFE / FOCUS / DANGER qua Serial. Dashboard không kết nối trực tiếp với Arduino và không suy ra Arduino Online chỉ từ trạng thái MQTT của Python.</span></div>
+        </div>
       </article>
     </section>
 
     <section class="card" style="margin-bottom:var(--gap)">
       <div class="card__header">
-        <h3 class="card__title"><i data-icon="lightbulb" data-size="18"></i>Peripherals</h3>
+        <h3 class="card__title"><i data-icon="lightbulb" data-size="18"></i>Thiết bị ngoại vi Arduino</h3>
         <div class="card__actions"><span data-source-tag></span></div>
       </div>
       <div class="card__body--flush" id="dev-grid"></div>
     </section>
-
-    <section class="an-grid an-grid--even">
-      <article class="card">
-        <div class="card__header"><h3 class="card__title"><i data-icon="server" data-size="18"></i>ESP32 API</h3></div>
-        <div>
-          <div class="endpoint">
-            <span class="method method--get">GET</span>
-            <div><code>/api/status</code><div class="endpoint__desc">Read device status</div></div>
-            <div class="card__actions"><button class="btn btn--sm" type="button" id="btn-fetch">Fetch</button></div>
-          </div>
-          <div class="endpoint">
-            <span class="method method--post">POST</span>
-            <div><code>/api/state</code><div class="endpoint__desc">Push driver state to LED / buzzer / displays</div></div>
-            <div class="card__actions">
-              <select class="select" id="sel-state" aria-label="State to send"><option value="SAFE">SAFE</option><option value="FOCUS">FOCUS</option><option value="DANGER">DANGER</option></select>
-              <button class="btn btn--sm" type="button" id="btn-state"><i data-icon="send" data-size="14"></i>Send</button>
-            </div>
-          </div>
-          <div class="endpoint">
-            <span class="method method--post">POST</span>
-            <div><code>/api/reset/ack</code><div class="endpoint__desc">Acknowledge a reset after DANGER</div></div>
-            <div class="card__actions"><button class="btn btn--sm" type="button" id="btn-ack"><i data-icon="rotate-ccw" data-size="14"></i>Acknowledge</button></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="card">
-        <div class="card__header">
-          <h3 class="card__title"><i data-icon="file-text" data-size="18"></i>Command Log</h3>
-          <div class="card__actions"><span class="card__sub">this session</span></div>
-        </div>
-        <div class="card__body--flush" id="cmd-log"></div>
-      </article>
-    </section>
-
   </main>
 
   <script src="../assets/js/icons.js"></script>
@@ -121,6 +61,8 @@
   <script src="../assets/js/api.js"></script>
   <script src="../assets/js/charts.js"></script>
   <script src="../assets/js/components.js"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="../assets/js/mqtt.js"></script>
   <script src="../assets/js/main.js"></script>
   <script src="../assets/js/devices.js"></script>
 </body>

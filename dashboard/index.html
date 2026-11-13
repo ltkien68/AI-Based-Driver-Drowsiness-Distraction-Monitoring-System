@@ -33,16 +33,16 @@
         </div>
       </article>
 
-      <article class="card stat-card" id="card-esp">
+      <article class="card stat-card" id="card-arduino">
         <div class="stat-card__top">
           <div class="stat-card__icon"><i data-icon="cpu" data-size="22"></i></div>
-          <div class="stat-card__label">ESP32 Device</div>
+          <div class="stat-card__label">Arduino Uno</div>
           <span data-source-tag></span>
         </div>
         <div class="stat-card__value"><span class="dot dot--off" data-ref="dot"></span><span data-ref="value">—</span></div>
         <div class="stat-card__rows">
-          <div class="kv"><span>Wi-Fi</span><strong data-ref="wifi">—</strong></div>
-          <div class="kv"><span>IP address</span><strong class="mono" data-ref="ip">—</strong></div>
+          <div class="kv"><span>Điều khiển</span><strong data-ref="connection">Serial từ Python</strong></div>
+          <div class="kv"><span>Phản hồi thiết bị</span><strong data-ref="feedback">Chưa có telemetry</strong></div>
         </div>
       </article>
 
@@ -119,6 +119,8 @@
   <script src="assets/js/api.js"></script>
   <script src="assets/js/charts.js"></script>
   <script src="assets/js/components.js"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="assets/js/mqtt.js"></script>
   <script src="assets/js/main.js"></script>
   <script src="assets/js/dashboard.js"></script>
 </body>

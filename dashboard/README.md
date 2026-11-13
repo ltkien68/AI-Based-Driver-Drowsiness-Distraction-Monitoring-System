@@ -1,7 +1,7 @@
 # KSafe AI – Driver Monitoring Dashboard
 
 Giao diện web giám sát hệ thống **KSafe AI** (cảnh báo tài xế buồn ngủ / mất tập trung bằng AI).
-Thuần HTML5 + CSS3 + JavaScript Vanilla, không framework, không cần build. Chạy được trong mạng LAN không có Internet.
+Thuần HTML5 + CSS3 + JavaScript Vanilla, không framework, không cần build. Chạy bằng VS Code Live Server hoặc HTTP server. MQTT.js được tải qua CDN nên cần Internet khi mở Dashboard.
 
 ## Chạy thử
 
@@ -21,13 +21,13 @@ python -m http.server 8080      # rồi mở http://localhost:8080
   `assets/js/i18n.js` dịch DOM và tự dịch cả nội dung do JS render sau đó (MutationObserver).
 - **Thêm / sửa bản dịch:** sửa `dict` hoặc `patterns` trong `lang/vi.js`. Mở console và gọi `KI18n.misses()` để xem chuỗi nào còn chưa được dịch.
 - **Thêm ngôn ngữ khác:** tạo `lang/xx.js` gọi `KI18n.register('xx', {...})`, nạp trước `main.js`, thêm nút trong `components.js`.
-- Giữ nguyên thuật ngữ kỹ thuật: SAFE / FOCUS / DANGER, EAR, Pitch / Yaw / Roll, ESP32, Wi-Fi, MediaPipe, DEMO / REAL.
+- Giữ nguyên thuật ngữ kỹ thuật: SAFE / FOCUS / DANGER, EAR, Pitch / Yaw / Roll, Arduino Uno, MQTT, MediaPipe, DEMO / REAL.
 
 ## DEMO và REAL
 
 | | DEMO | REAL |
 |---|---|---|
-| Nguồn | Mô phỏng ngay trong trình duyệt (kịch bản lặp 120 giây) | Đọc từ ESP32 và dịch vụ Python AI |
+| Nguồn | Mô phỏng ngay trong trình duyệt (kịch bản lặp 120 giây) | Python AI Engine publish MQTT qua Mosquitto WebSocket |
 | Khi mất kết nối | – | Hiển thị Offline / "—", **không bịa số liệu** |
 | Nhận biết | Banner vàng + nhãn `DEMO` trên mọi khối | Banner xanh + nhãn `REAL` |
 
@@ -50,46 +50,39 @@ KSafe-AI-Web/
         ├── icons.js           bộ icon Lucide nhúng sẵn (chạy offline)
         ├── i18n.js            engine đa ngôn ngữ
         ├── lang/vi.js         từ điển tiếng Việt
-        ├── api.js             tầng dữ liệu: DEMO/REAL, settings, cảnh báo, gọi ESP32
+        ├── api.js             tầng snapshot: DEMO/REAL, settings, cảnh báo, event bus
+        ├── mqtt.js            MQTT.js client: WebSocket, xác thực, subscribe, heartbeat
         ├── charts.js          biểu đồ SVG (line, bar, donut)
         ├── components.js      khung trang + component dùng chung
         ├── main.js            khởi động
         └── dashboard.js · monitoring.js · devices.js · alerts.js · analytics.js · settings.js
 ```
 
-## Tích hợp phần cứng (giai đoạn tiếp theo)
+## Nguồn dữ liệu REAL qua MQTT
 
-Mọi trang chỉ đọc một "snapshot" từ `KSafe.onSnapshot()`, nên đổi nguồn dữ liệu chỉ cần sửa `api.js`.
+Dashboard sử dụng MQTT.js trên trình duyệt, kết nối Mosquitto qua WebSocket:
 
-**ESP32 (HTTP server trong LAN)**
+- Broker: `ws://127.0.0.1:9001` (khi Dashboard và Mosquitto chạy cùng máy).
+- Username: `ksafe`.
+- Mật khẩu được nhập tại hộp thoại kết nối. Sau khi xác thực thành công, thông tin đăng nhập được lưu trong `sessionStorage` của tab hiện tại để các trang HTML trong cùng tab tự kết nối lại.
+- Không ghi mật khẩu vào source code hoặc `localStorage`. Khi đóng tab, phiên `sessionStorage` kết thúc.
+- Có thể xóa thông tin đăng nhập và ngắt MQTT tại **Cài đặt → MQTT session → Log out MQTT and clear saved credentials**.
+- Khi triển khai từ máy khác trong LAN, thay `127.0.0.1` trong `assets/js/mqtt.js` bằng IP LAN của máy chạy Mosquitto.
 
-| Method | Path | Ghi chú |
+### MQTT topics
+
+| Topic | Payload | Ý nghĩa |
 |---|---|---|
-| GET | `/api/status` | Trạng thái thiết bị |
-| POST | `/api/state` | Body `{"state":"SAFE\|FOCUS\|DANGER"}` |
-| POST | `/api/reset/ack` | Xác nhận reset sau DANGER |
+| `ksafe/driver/state` | `SAFE`, `FOCUS`, `DANGER`, `UNKNOWN` | Trạng thái do Python State Manager quyết định |
+| `ksafe/driver/metrics` | JSON gồm `ear`, `head_pose.pitch/yaw/roll`, `eye_direction`, `timestamp` | Metrics AI thực tế |
+| `ksafe/system/connection` | `ONLINE` / `OFFLINE` | Trạng thái kết nối Python |
+| `ksafe/system/heartbeat` | JSON gồm `status`, `timestamp` | Heartbeat Python; quá 15 giây được xem là cũ |
 
-`/api/status` nên trả JSON, ví dụ (field nào thiếu sẽ hiển thị "Chưa báo cáo", không bịa):
+`mqtt.js` chuyển payload thành snapshot rồi gọi `KSafe.ingest(snapshot)`. Các trang tiếp tục cập nhật qua `KSafe.onSnapshot()`; không polling HTTP thiết bị trong luồng REAL MQTT. Trạng thái Python ONLINE chỉ được xác nhận khi nhận heartbeat còn mới. Arduino Uno nhận lệnh từ Python AI Engine qua Serial. Dashboard hiện chưa có topic telemetry phản hồi Arduino nên hiển thị rõ trạng thái chưa có phản hồi, không suy ra Arduino Online từ kết nối MQTT.
 
-```json
-{ "device_id": "KSAFE-01", "firmware": "1.0.0", "uptime_s": 5025, "state": "SAFE",
-  "wifi": { "connected": true, "ssid": "MyLAN", "rssi": -58 },
-  "led": { "color": "green" }, "buzzer": { "active": false },
-  "oled": { "ok": true, "text": "SAFE" }, "lcd": { "ok": true, "text": "KSAFE AI" },
-  "button": { "reset_pending": false } }
-```
+**Lưu ý bảo mật:** `ws://` không mã hóa lưu lượng. Cấu hình hiện tại chỉ dành cho thử nghiệm trong LAN tin cậy; khi triển khai thực tế cần WSS/TLS, giới hạn ACL và đổi mật khẩu MQTT đã từng bị lộ.
 
-**Python AI** (địa chỉ cấu hình ở *API endpoint*)
-
-- `GET /api/ai/status` → `{ "online": true, "fps": 29.8, "face_detected": true, "ear": 0.31, "pitch": 2, "yaw": -3, "roll": 1, "gaze": "Center", "state": "SAFE", "face_box": {"x":0.35,"y":0.15,"w":0.3,"h":0.6} }`
-  Nếu không gửi `state`, dashboard tự phân loại theo ngưỡng trong Cài đặt.
-- `GET /video_feed` → luồng MJPEG cho khung camera (chọn *Nguồn camera = MJPEG*).
-
-**Bắt buộc:** ESP32 và dịch vụ Python phải trả header `Access-Control-Allow-Origin: *` (và xử lý `OPTIONS` cho các lệnh POST), nếu không trình duyệt sẽ chặn do CORS.
-
-**WebSocket:** viết một nguồn mới rồi gọi `KSafe.ingest(snapshot)` mỗi khi có dữ liệu; phần giao diện không cần thay đổi.
-
-## Ghi chú
+## Phần cứng Arduino Uno\n\n- Arduino Uno nhận trạng thái SAFE / FOCUS / DANGER từ Python AI Engine qua Serial.\n- Các ngoại vi trong mô hình gồm LCD, LED RGB, buzzer, động cơ rung, cảm biến siêu âm và nút Reset.\n- Dashboard không gửi lệnh trực tiếp tới Arduino và không giả lập trạng thái phần cứng trong chế độ REAL.\n\n## Ghi chú
 
 - Cảnh báo và thống kê lưu trong trình duyệt (`localStorage` / `sessionStorage`), có thể xóa ở *Cài đặt → Dữ liệu đã lưu*.
 - Khung camera chỉ hiển thị video thật (luồng MJPEG hoặc webcam). Khi chưa có nguồn, đó là placeholder; không có video giả. Vùng khuôn mặt nét đứt ở chế độ DEMO chỉ mang tính minh họa và được ghi rõ.

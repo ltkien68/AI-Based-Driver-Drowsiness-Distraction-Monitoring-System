@@ -20,9 +20,9 @@
     FOCUS:   { icon: 'alert-triangle', badge: 'focus',  title: 'Driver Needs Attention',
                desc: 'Early warning: eyes are closing or attention is drifting. Monitoring closely.' },
     DANGER:  { icon: 'siren',          badge: 'danger', title: 'Drowsiness / Distraction Detected',
-               desc: 'Alarm condition. ESP32 should sound the buzzer and show a red LED until reset.' },
+               desc: 'Alarm condition. Arduino Uno activates the buzzer and vibration motor until the driver acknowledges the alarm.' },
     UNKNOWN: { icon: 'eye-off',        badge: 'off',    title: 'No Driver Data',
-               desc: 'Waiting for the Python AI service. Check the connection in Device Management.' }
+               desc: 'Waiting for the Python AI Engine and its MQTT heartbeat.' }
   };
 
   var pageLinks = {};
@@ -62,7 +62,7 @@
     var mode = KS.mode();
     (root || document).querySelectorAll('[data-source-tag]').forEach(function (el) {
       el.textContent = mode.toUpperCase(); el.setAttribute('data-source', mode); el.classList.add('tag-source');
-      el.title = mode === 'demo' ? 'Simulated data – not from hardware' : 'Live data from ESP32 / Python AI';
+      el.title = mode === 'demo' ? 'Simulated data – not from hardware' : 'Live data from Python AI via MQTT';
     });
   }
   var signed = function (v, d) { return v == null ? '—' : (v > 0 ? '+' : '') + v.toFixed(d == null ? 1 : d); };
@@ -109,8 +109,9 @@
         '</div>' +
         '<nav class="sidebar__nav">' + nav + '</nav>' +
         '<div class="sidebar__status" aria-live="polite">' +
-          '<div class="sidebar__status-row">' + icon('cpu', 14) + 'ESP32<strong id="sb-esp"><span class="dot dot--off"></span></strong></div>' +
+          '<div class="sidebar__status-row">' + icon('radio-tower', 14) + 'MQTT Broker<strong id="sb-mqtt"><span class="dot dot--off"></span></strong></div>' +
           '<div class="sidebar__status-row">' + icon('scan-face', 14) + 'Python AI<strong id="sb-ai"><span class="dot dot--off"></span></strong></div>' +
+          '<div class="sidebar__status-row">' + icon('cpu', 14) + 'Arduino Uno<strong id="sb-arduino">Chưa có telemetry</strong></div>' +
           '<div class="sidebar__version"><span>Website</span><span>v' + KS.version + '</span></div>' +
         '</div>' +
       '</aside>' +
@@ -129,7 +130,7 @@
                 '<div class="menu__head"><strong>Operator</strong><span>Local session · LAN dashboard</span></div>' +
                 '<div class="menu__label">Data source</div>' +
                 '<button class="menu__item" role="menuitemradio" data-mode="demo" type="button">' + icon('activity', 16) + 'DEMO data' + icon('check', 16, 'check') + '</button>' +
-                '<button class="menu__item" role="menuitemradio" data-mode="real" type="button">' + icon('cpu', 16) + 'REAL data (ESP32 + AI)' + icon('check', 16, 'check') + '</button>' +
+                '<button class="menu__item" role="menuitemradio" data-mode="real" type="button">' + icon('cpu', 16) + 'REAL data (Python AI + Arduino Uno)' + icon('check', 16, 'check') + '</button>' +
                 '<div class="menu__label">Go to</div>' +
                 '<a class="menu__item" role="menuitem" href="' + href('settings') + '">' + icon('settings', 16) + 'Settings</a>' +
               '</div>' +
@@ -188,13 +189,15 @@
 
     /* --- reactive chrome (sidebar status, pill, banner, badges) --- */
     var update = function (snap) {
-      var mode = snap.mode, e = snap.esp32, a = snap.ai, tag = mode === 'demo' ? ' (demo)' : '';
-      var espTxt = snap.pending ? 'Checking…' : e.connected ? 'Connected' + tag : 'Disconnected';
+      var mode = snap.mode, a = snap.ai, tag = mode === 'demo' ? ' (demo)' : '';
+      var brokerOn = !!(snap.mqtt && snap.mqtt.connected);
+      var mqttTxt = mode === 'demo' ? 'Demo' : brokerOn ? 'Connected' : 'Disconnected';
       var aiTxt = snap.pending ? 'Checking…' : a.online ? 'Online' + tag : 'Offline';
-      $('#sb-esp').innerHTML = '<span class="dot dot--' + (e.connected ? 'safe' : 'off') + '" style="display:inline-block;margin-right:6px"></span>' + espTxt;
+      $('#sb-mqtt').innerHTML = '<span class="dot dot--' + (mode === 'demo' || brokerOn ? 'safe' : 'off') + '" style="display:inline-block;margin-right:6px"></span>' + mqttTxt;
+      $('#sb-arduino').textContent = mode === 'demo' ? 'DEMO' : 'Qua Serial';
       $('#sb-ai').innerHTML = '<span class="dot dot--' + (a.online ? 'safe' : 'off') + '" style="display:inline-block;margin-right:6px"></span>' + aiTxt;
 
-      var up = (e.connected ? 1 : 0) + (a.online ? 1 : 0);
+      var up = (mode === 'demo' ? 1 : brokerOn ? 1 : 0) + (a.online ? 1 : 0);
       var level = snap.pending ? 'degraded' : up === 2 ? 'online' : up === 1 ? 'degraded' : 'offline';
       var pill = $('#sys-pill'); pill.setAttribute('data-level', level);
       $('#sys-text').textContent = snap.pending ? 'Connecting…' : level === 'online' ? 'System Online' : level === 'degraded' ? 'Degraded' : 'System Offline';
@@ -208,10 +211,10 @@
           '<button class="btn btn--sm" type="button" data-act="switch-mode">Switch to REAL</button>';
       } else {
         var errs = [];
-        if (snap.errors && snap.errors.esp32) errs.push('ESP32: ' + snap.errors.esp32);
-        if (snap.errors && snap.errors.ai) errs.push('AI: ' + snap.errors.ai);
-        msg = '<strong>REAL DATA</strong><span>' + (snap.pending ? 'Connecting to ' + esc(s.esp32Ip) + ' and ' + esc(s.apiEndpoint) + '…'
-          : errs.length ? esc(errs.join(' · ')) : 'Receiving live data from ' + esc(s.esp32Ip) + ' and ' + esc(s.apiEndpoint)) + '</span>' +
+        if (snap.errors && snap.errors.mqtt) errs.push('MQTT: ' + snap.errors.mqtt);
+        if (snap.errors && snap.errors.ai) errs.push('Python AI: ' + snap.errors.ai);
+        msg = '<strong>REAL DATA · MQTT</strong><span>' + (snap.pending ? 'Đang kết nối Mosquitto WebSocket…'
+          : errs.length ? esc(errs.join(' · ')) : 'Đang nhận dữ liệu trực tiếp từ Python AI Engine qua MQTT') + '</span>' +
           '<button class="btn btn--sm" type="button" data-act="switch-mode">Switch to DEMO</button>';
       }
       if (bn._last !== msg) { bn.innerHTML = '<span aria-hidden="true">' + icon(mode === 'demo' ? 'info' : 'activity', 16) + '</span>' + msg; bn._last = msg; }
@@ -325,37 +328,25 @@
   /* Device grid                                                         */
   /* ================================================================== */
   function deviceItems(snap) {
-    var e = snap.esp32, pending = snap.pending, off = !e.connected;
-    var nodata = function (name, ic, desc) { return { name: name, icon: ic, tone: '', badge: badge('off', pending ? 'Checking…' : 'No data'), desc: desc || (pending ? 'Waiting for first response' : 'ESP32 not reachable') }; };
-    var items = [];
-
-    if (off) items.push(nodata('RGB LED', 'lightbulb'));
-    else {
-      var c = e.led.color, map = { green: ['safe', 'Green'], yellow: ['focus', 'Yellow'], amber: ['focus', 'Yellow'], red: ['danger', 'Red'] }[c];
-      items.push({ name: 'RGB LED', icon: 'lightbulb', tone: map ? map[0] : '', badge: map ? badge(map[0], map[1], true) : badge('off', 'Not reported'),
-        desc: 'Driver state indicator' + (e.state ? ' · ' + e.state : '') });
-    }
-    if (off) items.push(nodata('Buzzer', 'volume'));
-    else items.push({ name: 'Buzzer', icon: 'volume', tone: e.buzzer.active ? 'danger' : '',
-      badge: e.buzzer.active == null ? badge('off', 'Not reported') : e.buzzer.active ? badge('danger', 'Alarm active', true) : badge('safe', 'Silent'),
-      desc: e.buzzer.active ? 'Sounding until the reset button is pressed' : 'Sounds only in DANGER state' });
-
-    var disp = function (name, ic, o, label) {
-      if (off) return nodata(name, ic);
-      return { name: name, icon: ic, tone: '', badge: o.ok == null ? badge('off', 'Not reported') : o.ok ? badge('safe', 'Online') : badge('danger', 'Fault'),
-        desc: o.text ? label + ': ' + o.text : 'Status display' };
-    };
-    items.push(disp('OLED Display', 'monitor', e.oled, 'Showing'));
-    items.push(disp('LCD Display', 'rectangle', e.lcd, 'Message'));
-
-    if (off) items.push(nodata('Reset Button', 'circle-dot'));
-    else items.push({ name: 'Reset Button', icon: 'circle-dot', tone: e.button.resetPending ? 'focus' : '',
-      badge: e.button.resetPending == null ? badge('off', 'Not reported') : e.button.resetPending ? badge('focus', 'Reset pending', true) : badge('safe', 'Ready'),
-      desc: e.button.resetPending ? 'Waiting for POST /api/reset/ack' : 'Press on the device to acknowledge an alarm' });
-
-    if (off) items.push({ name: 'Wi-Fi Connection', icon: 'wifi-off', tone: '', badge: pending ? badge('off', 'Checking…') : badge('danger', 'Disconnected'), desc: pending ? 'Waiting for first response' : 'ESP32 not reachable on the LAN' });
-    else items.push({ name: 'Wi-Fi Connection', icon: 'wifi', tone: 'safe', badge: e.wifi.connected ? badge('safe', 'Connected') : badge('danger', 'Disconnected'),
-      desc: (e.wifi.ssid || 'SSID not reported') + ' · ' + (e.wifi.rssi != null ? e.wifi.rssi + ' dBm' : 'RSSI not reported') });
+    var demo = snap.mode === 'demo';
+    var state = snap.driver && snap.driver.state;
+    var led = state === 'SAFE' ? ['safe', 'Xanh lá'] : state === 'FOCUS' ? ['focus', 'Vàng'] : state === 'DANGER' ? ['danger', 'Đỏ'] : null;
+    var items = [
+      { name: 'Arduino Uno', icon: 'cpu', tone: '', badge: badge(demo ? 'info' : 'off', demo ? 'Mô phỏng DEMO' : 'Chưa có telemetry'),
+        desc: 'Bộ điều khiển phần cứng · nhận lệnh từ Python AI Engine qua Serial' },
+      { name: 'LED RGB', icon: 'lightbulb', tone: led ? led[0] : '', badge: demo && led ? badge(led[0], led[1], true) : badge('off', 'Chưa có phản hồi'),
+        desc: 'Đèn báo trạng thái SAFE / FOCUS / DANGER' },
+      { name: 'Buzzer', icon: 'volume', tone: demo && state === 'DANGER' ? 'danger' : '', badge: demo ? badge(state === 'DANGER' ? 'danger' : 'safe', state === 'DANGER' ? 'Đang mô phỏng báo động' : 'Im lặng') : badge('off', 'Chưa có phản hồi'),
+        desc: 'Phát âm báo khi hệ thống xác định DANGER' },
+      { name: 'Động cơ rung', icon: 'vibrate', tone: demo && state === 'DANGER' ? 'danger' : '', badge: demo ? badge(state === 'DANGER' ? 'danger' : 'safe', state === 'DANGER' ? 'Đang mô phỏng rung' : 'Không hoạt động') : badge('off', 'Chưa có phản hồi'),
+        desc: 'Rung cảnh báo khi phát hiện nguy cơ ngủ gật' },
+      { name: 'LCD Display', icon: 'monitor', tone: '', badge: demo ? badge('info', 'Mô phỏng DEMO') : badge('off', 'Chưa có phản hồi'),
+        desc: demo ? 'KSAFE AI | ' + (state || 'UNKNOWN') : 'Hiển thị trạng thái và cảnh báo từ Python AI' },
+      { name: 'Cảm biến siêu âm', icon: 'radio', tone: '', badge: demo ? badge('info', 'Mô phỏng DEMO') : badge('off', 'Chưa có phản hồi'),
+        desc: 'Cảm biến khoảng cách trong mô hình phần cứng' },
+      { name: 'Nút Reset', icon: 'circle-dot', tone: '', badge: demo ? badge('info', 'Mô phỏng DEMO') : badge('off', 'Chưa có phản hồi'),
+        desc: 'Tài xế nhấn nút vật lý để xác nhận sau cảnh báo' }
+    ];
     return items;
   }
 

@@ -20,7 +20,7 @@
     <div class="page-head">
       <div>
         <h2>Settings</h2>
-        <p>Connection addresses, camera source and detection thresholds. Saved in this browser.</p>
+        <p>Camera source and detection thresholds. MQTT telemetry and Arduino Serial architecture.</p>
       </div>
     </div>
 
@@ -39,34 +39,13 @@
         </section>
 
         <section class="card">
-          <div class="card__header"><h3 class="card__title"><i data-icon="plug" data-size="18"></i>Connection</h3></div>
+          <div class="card__header"><h3 class="card__title"><i data-icon="plug" data-size="18"></i>Kiến trúc kết nối</h3></div>
           <div class="card__body stack">
-            <div class="form-grid">
-              <div class="field">
-                <label for="esp32Ip">ESP32 IP address</label>
-                <div class="input-group"><input class="input mono" id="esp32Ip" name="esp32Ip" type="text" spellcheck="false" placeholder="192.168.1.50"><span class="input-group__addon">http://</span></div>
-                <div class="field__error" data-err="esp32Ip" hidden></div>
-              </div>
-              <div class="field">
-                <label for="apiEndpoint">API endpoint (Python AI service)</label>
-                <input class="input mono" id="apiEndpoint" name="apiEndpoint" type="text" spellcheck="false" placeholder="http://localhost:8000">
-                <div class="field__error" data-err="apiEndpoint" hidden></div>
-              </div>
-              <div class="field">
-                <label for="pollIntervalMs">Polling interval</label>
-                <select class="select" id="pollIntervalMs" name="pollIntervalMs"><option value="500">500 ms</option><option value="1000">1 second</option><option value="2000">2 seconds</option><option value="5000">5 seconds</option></select>
-              </div>
-              <div class="field">
-                <label for="requestTimeoutMs">Request timeout</label>
-                <div class="input-group"><input class="input mono" id="requestTimeoutMs" name="requestTimeoutMs" type="number" min="500" max="10000" step="100"><span class="input-group__addon">ms</span></div>
-                <div class="field__error" data-err="requestTimeoutMs" hidden></div>
-              </div>
-            </div>
-            <div class="form-actions">
-              <button class="btn" type="button" id="btn-test-esp"><i data-icon="zap" data-size="16"></i>Test ESP32</button>
-              <button class="btn" type="button" id="btn-test-ai"><i data-icon="zap" data-size="16"></i>Test AI service</button>
-            </div>
-            <div class="test-result" id="test-result" hidden></div>
+            <div class="kv"><span>AI Engine</span><strong>Python · OpenCV · MediaPipe</strong></div>
+            <div class="kv"><span>Telemetry Dashboard</span><strong>MQTT over WebSocket</strong></div>
+            <div class="kv"><span>MQTT Broker</span><strong class="mono">127.0.0.1:9001</strong></div>
+            <div class="kv"><span>Điều khiển phần cứng</span><strong>Python → Serial → Arduino Uno</strong></div>
+            <div class="note"><i data-icon="info" data-size="16"></i><span>Dashboard nhận trạng thái tài xế và metrics từ Python AI qua MQTT. Arduino Uno nhận lệnh điều khiển qua Serial; hiện chưa có telemetry độc lập để xác nhận trạng thái phần cứng.</span></div>
           </div>
         </section>
 
@@ -165,6 +144,13 @@
             <button class="btn btn--sm" type="button" id="btn-clear-demo">Clear DEMO session alerts</button>
           </div>
         </section>
+        <section class="card">
+          <div class="card__header"><h3 class="card__title"><i data-icon="lock" data-size="18"></i>MQTT session</h3></div>
+          <div class="card__body" style="display:grid;gap:10px">
+            <p class="muted" style="font-size:12.5px">The MQTT password is kept in this tab's sessionStorage so page navigation does not require signing in again.</p>
+            <button class="btn btn--sm" type="button" id="btn-mqtt-logout">Log out MQTT and clear saved credentials</button>
+          </div>
+        </section>
       </aside>
     </form>
 
@@ -176,6 +162,8 @@
   <script src="../assets/js/api.js"></script>
   <script src="../assets/js/charts.js"></script>
   <script src="../assets/js/components.js"></script>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="../assets/js/mqtt.js"></script>
   <script src="../assets/js/main.js"></script>
   <script src="../assets/js/settings.js"></script>
 </body>

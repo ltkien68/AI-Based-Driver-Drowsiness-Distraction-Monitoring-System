@@ -4,7 +4,7 @@
    patterns : [regex, mẫu] cho chuỗi có số liệu động. Mẫu là chuỗi dùng $1, $2… hoặc
               hàm (match, t) trong đó t() dịch tiếp phần con.
    Giữ nguyên các thuật ngữ kỹ thuật: SAFE / FOCUS / DANGER, EAR, Pitch/Yaw/Roll,
-   ESP32, Wi-Fi, MediaPipe, DEMO / REAL.
+   Arduino Uno, Wi-Fi, MediaPipe, DEMO / REAL.
    ========================================================================== */
 (function () {
   'use strict';
@@ -22,13 +22,13 @@
     'Connecting…': 'Đang kết nối…', 'Checking…': 'Đang kiểm tra…',
     'Operator': 'Người vận hành', 'Local session': 'Phiên cục bộ', 'LAN dashboard': 'Bảng điều khiển LAN',
     'Data source': 'Nguồn dữ liệu', 'DEMO data': 'Dữ liệu DEMO', 'REAL data': 'Dữ liệu REAL',
-    'REAL data (ESP32 + AI)': 'Dữ liệu REAL (ESP32 + AI)', 'Go to': 'Đi tới',
+    'REAL data (Arduino Uno + AI)': 'Dữ liệu REAL (Arduino Uno + AI)', 'Go to': 'Đi tới',
     'DEMO DATA': 'DỮ LIỆU DEMO', 'REAL DATA': 'DỮ LIỆU REAL',
     'Values are simulated in your browser to preview the UI. No hardware is being read.':
       'Số liệu được mô phỏng ngay trong trình duyệt để xem trước giao diện. Hệ thống không đọc dữ liệu từ phần cứng.',
     'Switch to REAL': 'Chuyển sang REAL', 'Switch to DEMO': 'Chuyển sang DEMO',
     'Simulated data – not from hardware': 'Dữ liệu mô phỏng – không lấy từ phần cứng',
-    'Live data from ESP32 / Python AI': 'Dữ liệu trực tiếp từ ESP32 / Python AI',
+    'Live data from Arduino Uno / Python AI': 'Dữ liệu trực tiếp từ Arduino Uno / Python AI',
 
     /* ---- Trạng thái chung ---- */
     'Online': 'Trực tuyến', 'Offline': 'Ngoại tuyến', 'Connected': 'Đã kết nối', 'Disconnected': 'Mất kết nối',
@@ -53,8 +53,8 @@
       'Mắt mở và tư thế đầu trong giới hạn bình thường. Không cần xử lý.',
     'Early warning: eyes are closing or attention is drifting. Monitoring closely.':
       'Cảnh báo sớm: mắt đang nhắm dần hoặc sự chú ý đang giảm. Hệ thống đang theo dõi sát.',
-    'Alarm condition. ESP32 should sound the buzzer and show a red LED until reset.':
-      'Tình trạng báo động. ESP32 sẽ bật còi và đèn LED đỏ cho đến khi được reset.',
+    'Alarm condition. Arduino Uno should sound the buzzer and show a red LED until reset.':
+      'Tình trạng báo động. Arduino Uno sẽ bật còi và đèn LED đỏ cho đến khi được reset.',
     'Waiting for the Python AI service. Check the connection in Device Management.':
       'Đang chờ dịch vụ Python AI. Hãy kiểm tra kết nối trong mục Quản lý thiết bị.',
     'In this state for': 'Thời gian ở trạng thái này', 'Trigger': 'Nguyên nhân', 'Last update': 'Cập nhật lần cuối',
@@ -62,7 +62,7 @@
 
     /* ---- Thẻ trạng thái / Overview ---- */
     'System status': 'Trạng thái hệ thống', 'Live monitoring': 'Giám sát trực tiếp',
-    'AI Monitoring': 'Giám sát AI', 'ESP32 Device': 'Thiết bị ESP32', 'Driver Status': 'Trạng thái tài xế', 'Alert Counter': 'Số cảnh báo',
+    'AI Monitoring': 'Giám sát AI', 'Arduino Uno Device': 'Thiết bị Arduino Uno', 'Driver Status': 'Trạng thái tài xế', 'Alert Counter': 'Số cảnh báo',
     'Frame rate': 'Tốc độ khung hình', 'IP address': 'Địa chỉ IP', 'Last alert': 'Cảnh báo gần nhất', 'Session started': 'Bắt đầu phiên',
     'Open full view': 'Xem toàn màn hình', 'Device Monitoring': 'Giám sát thiết bị', 'Manage': 'Quản lý',
     'Recent Alerts': 'Cảnh báo gần đây', 'View all': 'Xem tất cả',
@@ -93,14 +93,11 @@
 
     /* ---- Thiết bị ---- */
     'Buzzer': 'Còi buzzer', 'OLED Display': 'Màn hình OLED', 'LCD Display': 'Màn hình LCD', 'Reset Button': 'Nút Reset',
-    'Wi-Fi Connection': 'Kết nối Wi-Fi', 'ESP32 not reachable': 'Không truy cập được ESP32',
     'Waiting for first response': 'Đang chờ phản hồi đầu tiên', 'Driver state indicator': 'Đèn báo trạng thái tài xế',
     'Alarm active': 'Đang báo động', 'Sounding until the reset button is pressed': 'Kêu cho đến khi nhấn nút reset',
     'Sounds only in DANGER state': 'Chỉ kêu ở trạng thái DANGER', 'Status display': 'Màn hình trạng thái',
-    'Reset pending': 'Chờ reset', 'Waiting for POST /api/reset/ack': 'Đang chờ POST /api/reset/ack',
+    'Reset pending': 'Chờ reset',
     'Press on the device to acknowledge an alarm': 'Nhấn trên thiết bị để xác nhận báo động',
-    'ESP32 not reachable on the LAN': 'Không truy cập được ESP32 trong mạng LAN',
-    'SSID not reported': 'Chưa báo cáo SSID', 'RSSI not reported': 'Chưa báo cáo RSSI',
 
     /* ---- Bảng cảnh báo ---- */
     'Time': 'Thời gian', 'Event': 'Sự kiện', 'Severity': 'Mức độ', 'Status': 'Trạng thái',
@@ -124,41 +121,6 @@
     'Eye Gaze Monitoring': 'Theo dõi hướng nhìn', 'UP': 'LÊN', 'DOWN': 'XUỐNG', 'LEFT': 'TRÁI', 'RIGHT': 'PHẢI',
     'Gaze direction indicator': 'Chỉ báo hướng nhìn', 'Waiting for AI data…': 'Đang chờ dữ liệu AI…',
     'Eye aspect ratio over time': 'Chỉ số EAR theo thời gian', 'Head pose over time': 'Tư thế đầu theo thời gian',
-
-    /* ---- Quản lý thiết bị ---- */
-    'ESP32 node on the local network: identity, connection, peripherals and API commands.':
-      'Nút ESP32 trong mạng nội bộ: định danh, kết nối, thiết bị ngoại vi và lệnh API.',
-    'Refresh now': 'Làm mới ngay', 'Refreshing…': 'Đang làm mới…', 'ESP32 Information': 'Thông tin ESP32',
-    'Connection Settings': 'Cấu hình kết nối', 'ESP32 IP address': 'Địa chỉ IP ESP32',
-    'The ESP32 runs an HTTP server on the LAN. A fixed or reserved IP is recommended.':
-      'ESP32 chạy HTTP server trong mạng LAN. Nên dùng IP cố định hoặc IP đặt trước.',
-    'Polling interval': 'Chu kỳ cập nhật', '1 second': '1 giây', '2 seconds': '2 giây', '5 seconds': '5 giây',
-    'Request timeout': 'Thời gian chờ phản hồi', 'Save': 'Lưu', 'Test connection': 'Kiểm tra kết nối',
-    'The test always contacts the real device, even while the dashboard is in DEMO mode. The ESP32 firmware must reply with the header':
-      'Phép thử luôn kết nối tới thiết bị thật, kể cả khi dashboard đang ở chế độ DEMO. Firmware ESP32 phải trả về header',
-    'so the browser can read': 'để trình duyệt có thể đọc',
-    'Peripherals': 'Thiết bị ngoại vi', 'Read device status': 'Đọc trạng thái thiết bị', 'Fetch': 'Lấy dữ liệu',
-    'Push driver state to LED / buzzer / displays': 'Gửi trạng thái tài xế tới LED / còi / màn hình', 'Send': 'Gửi',
-    'Acknowledge a reset after DANGER': 'Xác nhận reset sau trạng thái DANGER', 'Acknowledge': 'Xác nhận',
-    'State to send': 'Trạng thái cần gửi', 'Command Log': 'Nhật ký lệnh', 'No commands sent': 'Chưa gửi lệnh nào',
-    'Requests you send from the ESP32 API card appear here.': 'Các yêu cầu bạn gửi từ thẻ ESP32 API sẽ hiển thị ở đây.',
-    'Request': 'Yêu cầu', 'Result': 'Kết quả', 'Failed': 'Thất bại',
-    'DEMO – not sent to hardware': 'DEMO – không gửi tới phần cứng',
-    'Device ID': 'Mã thiết bị', 'Wi-Fi status': 'Trạng thái Wi-Fi', 'Wi-Fi network': 'Mạng Wi-Fi',
-    'Signal strength': 'Cường độ tín hiệu', 'Uptime': 'Thời gian hoạt động', 'Firmware version': 'Phiên bản firmware',
-    'Response time': 'Thời gian phản hồi', 'Driver state on device': 'Trạng thái tài xế trên thiết bị',
-    'Connection settings saved': 'Đã lưu cấu hình kết nối',
-    'Enter the ESP32 IP address': 'Nhập địa chỉ IP ESP32', 'Not a valid IP address or hostname': 'Địa chỉ IP hoặc tên máy không hợp lệ',
-    'Enter 500 – 10000 ms': 'Nhập từ 500 – 10000 ms',
-    'Enter an IP address first': 'Hãy nhập địa chỉ IP trước', 'Enter an API endpoint first': 'Hãy nhập API endpoint trước',
-    'DEMO – nothing was sent to the device': 'DEMO – không có gì được gửi tới thiết bị',
-    'DEMO – no request was made. Switch to REAL data, or use "Test connection".':
-      'DEMO – không có yêu cầu nào được gửi. Hãy chuyển sang dữ liệu REAL hoặc dùng “Kiểm tra kết nối”.',
-    'Request succeeded': 'Yêu cầu thành công',
-    'ESP32 IP address not configured': 'Chưa cấu hình địa chỉ IP ESP32', 'API endpoint not configured': 'Chưa cấu hình API endpoint',
-    'Network error – device offline, wrong address, or CORS not enabled on the device':
-      'Lỗi mạng – thiết bị ngoại tuyến, sai địa chỉ hoặc thiết bị chưa bật CORS',
-    'ESP32 reachable': 'Kết nối được ESP32', 'AI service reachable': 'Kết nối được dịch vụ AI',
 
     /* ---- Lịch sử cảnh báo ---- */
     'Every drowsiness and distraction event detected by the system.': 'Mọi sự kiện buồn ngủ và mất tập trung do hệ thống phát hiện.',
@@ -188,7 +150,7 @@
     'Active hours per day': 'Giờ hoạt động mỗi ngày', 'Uptime statistics': 'Thống kê thời gian hoạt động',
     'Dashboard session': 'Phiên dashboard', 'Active time today': 'Thời gian hoạt động hôm nay',
     'Average per active day': 'Trung bình mỗi ngày hoạt động', 'Days with recorded activity': 'Số ngày có ghi nhận hoạt động',
-    'ESP32 uptime': 'Thời gian hoạt động ESP32', 'Share': 'Tỷ lệ', 'Threshold': 'Ngưỡng', 'Active': 'Hoạt động',
+    'Arduino Uno uptime': 'Thời gian hoạt động Arduino Uno', 'Share': 'Tỷ lệ', 'Threshold': 'Ngưỡng', 'Active': 'Hoạt động',
     'No alerts recorded in REAL mode in this range': 'Không có cảnh báo REAL nào trong khoảng này',
     'No alerts in this range': 'Không có cảnh báo trong khoảng này', 'No activity recorded in this range': 'Không ghi nhận hoạt động trong khoảng này',
     'No data in this range': 'Không có dữ liệu trong khoảng này', 'Bar chart': 'Biểu đồ cột', 'Line chart': 'Biểu đồ đường', 'Donut chart': 'Biểu đồ tròn',
@@ -198,11 +160,11 @@
     'Connection addresses, camera source and detection thresholds. Saved in this browser.':
       'Địa chỉ kết nối, nguồn camera và ngưỡng nhận diện. Được lưu trong trình duyệt này.',
     'Connection': 'Kết nối', 'API endpoint (Python AI service)': 'API endpoint (dịch vụ Python AI)',
-    'Test ESP32': 'Kiểm tra ESP32', 'Test AI service': 'Kiểm tra dịch vụ AI',
+    'Test Arduino Uno': 'Kiểm tra Arduino Uno', 'Test AI service': 'Kiểm tra dịch vụ AI',
     'DEMO: values are simulated in the browser to preview the interface. No hardware is contacted. Applies immediately.':
       'DEMO: số liệu được mô phỏng trong trình duyệt để xem trước giao diện, không kết nối phần cứng. Áp dụng ngay.',
-    'REAL: the dashboard polls the ESP32 and the Python AI service using the addresses below. Anything unreachable is shown as offline – nothing is simulated. Applies immediately.':
-      'REAL: dashboard đọc dữ liệu từ ESP32 và dịch vụ Python AI theo địa chỉ bên dưới. Thiết bị nào không kết nối được sẽ hiển thị là ngoại tuyến – không có gì bị mô phỏng. Áp dụng ngay.',
+    'REAL: the dashboard polls the Arduino Uno and the Python AI service using the addresses below. Anything unreachable is shown as offline – nothing is simulated. Applies immediately.':
+      'REAL: dashboard đọc dữ liệu từ Arduino Uno và dịch vụ Python AI theo địa chỉ bên dưới. Thiết bị nào không kết nối được sẽ hiển thị là ngoại tuyến – không có gì bị mô phỏng. Áp dụng ngay.',
     'Camera configuration': 'Cấu hình camera', 'Camera source': 'Nguồn camera',
     'None (placeholder)': 'Không có (hiển thị khung chờ)', 'MJPEG stream from Python service': 'Luồng MJPEG từ dịch vụ Python',
     'Browser webcam (localhost / HTTPS only)': 'Webcam trình duyệt (chỉ localhost / HTTPS)',
@@ -239,7 +201,7 @@
     [/^(.+) \(demo\)$/, function (m, t) { return t(m[1]) + ' (demo)'; }],
     [/^Connecting to (.+) and (.+)…$/, 'Đang kết nối tới $1 và $2…'],
     [/^Receiving live data from (.+) and (.+)$/, 'Đang nhận dữ liệu trực tiếp từ $1 và $2'],
-    [/^(ESP32|AI|AI service): (.+)$/, function (m, t) { return t(m[1]) + ': ' + t(m[2]); }],
+    [/^(Arduino Uno|AI|AI service): (.+)$/, function (m, t) { return t(m[1]) + ': ' + t(m[2]); }],
     [/^Timeout after (\d+) ms$/, 'Hết thời gian chờ sau $1 ms'],
     [/^Switched to (DEMO|REAL) data$/, 'Đã chuyển sang dữ liệu $1'],
     [/^(\d+) alerts this session$/, '$1 cảnh báo trong phiên này'],
@@ -257,7 +219,6 @@
     [/^device (.+)$/, 'thiết bị $1'],
     [/^firmware (.+)$/, 'firmware $1'],
     [/^Request failed: (.+)$/, function (m, t) { return 'Yêu cầu thất bại: ' + t(m[1]); }],
-    [/^GET \/api\/status failed: (.+)$/, function (m, t) { return 'GET /api/status thất bại: ' + t(m[1]); }],
     [/^Cannot load the stream at (.+)\. Check that the Python service is running and allows this origin\.$/,
       'Không tải được luồng video tại $1. Hãy kiểm tra dịch vụ Python đang chạy và cho phép truy cập từ địa chỉ này.'],
     [/^Webcam unavailable \((.+)\)\.$/, 'Không dùng được webcam ($1).'],

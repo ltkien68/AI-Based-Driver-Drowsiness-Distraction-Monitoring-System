@@ -16,7 +16,7 @@
   UI.AlertsTable($('#alerts'), { limit: 6 });
   KIcons.hydrate(document);
 
-  var cardAI = $('#card-ai'), cardEsp = $('#card-esp'), cardDriver = $('#card-driver'), cardAlerts = $('#card-alerts');
+  var cardAI = $('#card-ai'), cardArduino = $('#card-arduino'), cardDriver = $('#card-driver'), cardAlerts = $('#card-alerts');
 
   function setOnline(card, on, pending, onText, offText) {
     ref(card, 'dot').className = 'dot ' + (pending ? 'dot--off' : on ? 'dot--safe dot--pulse' : 'dot--danger');
@@ -24,17 +24,19 @@
   }
 
   function render(snap) {
-    var ai = snap.ai, esp = snap.esp32, d = snap.driver;
+    var ai = snap.ai, arduino = snap.arduino || {}, d = snap.driver;
 
     /* 1. AI Monitoring */
     setOnline(cardAI, ai.online, snap.pending, 'Online', 'Offline');
     ref(cardAI, 'mp').textContent = ai.online ? (ai.mediapipe || 'Unknown') : 'No data';
     ref(cardAI, 'fps').textContent = ai.online && ai.fps != null ? ai.fps.toFixed(1) + ' fps' : '—';
 
-    /* 2. ESP32 */
-    setOnline(cardEsp, esp.connected, snap.pending, 'Connected', 'Disconnected');
-    ref(cardEsp, 'wifi').textContent = esp.connected ? (esp.wifi.connected ? 'Connected' + (esp.wifi.rssi != null ? ' · ' + esp.wifi.rssi + ' dBm' : '') : 'Disconnected') : (snap.pending ? '—' : 'Unreachable');
-    ref(cardEsp, 'ip').textContent = esp.ip || '—';
+    /* 2. Arduino Uno: Python dieu khien qua Serial; chua co telemetry doc lap. */
+    var arduinoDemo = snap.mode === 'demo';
+    ref(cardArduino, 'dot').className = 'dot ' + (arduinoDemo ? 'dot--safe' : 'dot--off');
+    ref(cardArduino, 'value').textContent = arduinoDemo ? 'DEMO' : 'Điều khiển qua Serial';
+    ref(cardArduino, 'connection').textContent = 'Python AI → Serial';
+    ref(cardArduino, 'feedback').textContent = arduinoDemo ? 'Dữ liệu mô phỏng' : 'Chưa có telemetry';
 
     /* 3. Driver status */
     var meta = UI.STATE_META[d.state] || UI.STATE_META.UNKNOWN;

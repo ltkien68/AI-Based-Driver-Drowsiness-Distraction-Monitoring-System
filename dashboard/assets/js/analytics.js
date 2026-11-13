@@ -69,7 +69,7 @@
       ['Active time (' + (range === 1 ? 'today' : 'last ' + range + ' days') + ')', util.duration(active)],
       ['Average per active day', withData ? util.duration(active / withData) : '—'],
       ['Days with recorded activity', withData + ' / ' + range],
-      ['ESP32 uptime', snap && snap.esp32.uptimeSec != null ? util.duration(snap.esp32.uptimeSec) : '—'],
+      ['Arduino Uno', 'Điều khiển qua Serial'],
       ['Data source', mode.toUpperCase()]
     ];
     $('#uptime-stats').innerHTML = rows.map(function (r) { return '<div class="kv"><span>' + r[0] + '</span><strong class="mono">' + r[1] + '</strong></div>'; }).join('');

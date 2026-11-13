@@ -11,5 +11,5 @@
   KLayout.mount();          // sidebar + header + banner
   KIcons.hydrate(document); // thay <i data-icon> trong nội dung trang
   KUI.tagSources(document); // gắn nhãn DEMO/REAL
-  KSafe.start();            // bắt đầu polling (REAL) hoặc mô phỏng (DEMO)
+  KSafe.start();            // bat dau MQTT (REAL) hoac mo phong (DEMO)
 })();

@@ -23,7 +23,7 @@
   var textRec = new WeakMap(), attrRec = new WeakMap();
   var ATTRS = ['placeholder', 'title', 'aria-label', 'alt'];
   var SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CODE: 1, NOSCRIPT: 1 };
-  var NO_MISS = /^[^a-z]*$|^(https?:|GET \/|POST \/|v\d|KSafe-LAN|English)|^(KSafe AI|Wi-Fi|MediaPipe|Python AI|OpenCV|ESP32|Website|Camera|Firmware|Pitch|Yaw|Roll|EAR|FPS|Webcam|DEMO|REAL|LIVE|OK|HTTP)\b/;
+  var NO_MISS = /^[^a-z]*$|^(https?:|GET \/|POST \/|v\d|KSafe-LAN|English)|^(KSafe AI|Wi-Fi|MediaPipe|Python AI|OpenCV|Arduino Uno|Website|Camera|Firmware|Pitch|Yaw|Roll|EAR|FPS|Webcam|DEMO|REAL|LIVE|OK|HTTP)\b/;
 
   /* ---------------- Dịch một chuỗi ---------------- */
   function lookup(pack, key, depth) {
