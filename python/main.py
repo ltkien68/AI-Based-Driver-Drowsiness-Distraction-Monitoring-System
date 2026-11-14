@@ -2,7 +2,10 @@ import cv2
 import mediapipe as mp
 import time
 import serial
+import threading
 
+from video_server import chay_video_server
+from video_server import chay_video_server, update_frame
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from drowsiness_detector import DrowsinessDetector
@@ -69,6 +72,13 @@ last_mqtt_state = None
 # Bien quan ly thoi gian gui MQTT
 last_heartbeat_time = 0
 last_metrics_time = 0
+
+video_thread = threading.Thread(
+    target=chay_video_server,
+    daemon=True
+)
+
+video_thread.start()
 
 try:
     with FaceLandmarker.create_from_options(options) as landmarker:
@@ -394,6 +404,7 @@ try:
             # HIEN THI CAMERA
             # ==================================
 
+            update_frame(frame)
             cv2.imshow(
                 "KSafe AI - Camera",
                 frame
