@@ -161,7 +161,7 @@ void LCD::hienThiTrangThai(char trangThai) {
 
 void LCD::hienThiLCD(char trangThai) {
     lcd.setCursor(0, 0);
-    lcd.print("KSafe AI        ");
+    lcd.print("TEST        ");
 
     lcd.setCursor(0, 1);
     lcd.print("                ");

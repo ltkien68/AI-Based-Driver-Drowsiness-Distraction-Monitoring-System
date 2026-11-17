@@ -2,109 +2,235 @@ import time
 
 
 class StateManager:
-    # Các trạng thái chính của hệ thống
+
+    # Các trạng thái của hệ thống
     SAFE = "SAFE"
+    MIRROR_CHECK = "MIRROR_CHECK"
+    UNKNOWN = "UNKNOWN"
     FOCUS = "FOCUS"
     DANGER = "DANGER"
 
     def __init__(self):
-        # Ngưỡng quay đầu để xác định mất tập trung
-        # Yaw khoảng 13-15 độ vẫn có thể là liếc gương
-        self.yaw_threshold = 20.0
 
-        # Thời gian phải duy trì trạng thái mất tập trung
-        # để tránh cảnh báo khi chỉ liếc nhanh
-        self.distraction_threshold = 2.0
+        # ==========================================
+        # NGUONG THOI GIAN
+        # ==========================================
 
-        # Ngưỡng ngủ gật
+        # UNKNOWN kéo dài bao lâu thì chuyển FOCUS
+        self.unknown_threshold = 1.5
+
+        # FOCUS liên tục bao lâu thì chuyển DANGER
+        self.focus_danger_threshold = 3.0
+
+        # Nhắm mắt liên tục bao lâu thì chuyển DANGER
         self.danger_threshold = 2.0
 
-        # Yaw chuẩn khi nhìn thẳng
+        # ==========================================
+        # NGUONG QUAY DAU CU
+        # Chi dung khi chua truyen attention
+        # tu DistractionDetector
+        # ==========================================
+
+        self.yaw_threshold = 20.0
         self.center_yaw = 2.0
 
-        # Thời điểm bắt đầu mất tập trung
-        self.distraction_start_time = None
+        # ==========================================
+        # BO DEM THOI GIAN
+        # ==========================================
+
+        self.unknown_start_time = None
+        self.focus_start_time = None
 
         # Trạng thái hiện tại
         self.current_state = self.SAFE
 
+    # ==================================================
+    # KIEM TRA MAT TAP TRUNG CU
+    # ==================================================
+
     def is_distraction(self, yaw, eye_direction):
         """
-        Xác định tài xế có đang mất tập trung hay không.
-
-        Yaw là điều kiện chính.
-        Eye direction chỉ dùng để tham khảo vì khi quay đầu mạnh,
-        vị trí đồng tử có thể bị nhận sai thành CENTER.
+        Logic tương thích với cách gọi cũ.
+        Khi tích hợp DistractionDetector mới,
+        ưu tiên sử dụng attention được truyền vào.
         """
+
+        if yaw is None:
+            return False
 
         yaw_deviation = abs(yaw - self.center_yaw)
 
-        # Đầu quay đủ xa khỏi hướng nhìn thẳng
-        if yaw_deviation > self.yaw_threshold:
-            return True
+        return yaw_deviation > self.yaw_threshold
 
-        return False
+    # ==================================================
+    # RESET BO DEM
+    # ==================================================
 
-    def update(self, eye_state, closed_duration, yaw, eye_direction):
+    def reset_timers(self):
+        """Xóa các bộ đếm thời gian."""
+
+        self.unknown_start_time = None
+        self.focus_start_time = None
+
+    # ==================================================
+    # CAP NHAT TRANG THAI
+    # ==================================================
+
+    def update(
+        self,
+        eye_state,
+        closed_duration,
+        yaw=None,
+        eye_direction="UNKNOWN",
+        attention=None
+    ):
         """
         Cập nhật trạng thái hệ thống.
 
+        attention nhận từ DistractionDetector:
+            SAFE
+            MIRROR_CHECK
+            FOCUS
+            UNKNOWN
+
         Ưu tiên:
-        DANGER > FOCUS > SAFE
+            DANGER > FOCUS > UNKNOWN
+            MIRROR_CHECK không tính FOCUS.
         """
 
-        # DANGER do nhắm mắt quá lâu
+        current_time = time.monotonic()
+
+        # ==========================================
+        # 1. DANGER DO NHAM MAT
+        # ==========================================
+
         if (
             eye_state == "CLOSED"
             and closed_duration >= self.danger_threshold
         ):
             self.current_state = self.DANGER
-
-            # Xóa bộ đếm distraction
-            self.distraction_start_time = None
+            self.reset_timers()
 
             return self.current_state
 
-        # Nếu đã vào DANGER thì giữ nguyên
-        # Cho đến khi có cơ chế reset riêng
+        # ==========================================
+        # 2. DA DANGER THI GIU NGUYEN
+        # ==========================================
+
         if self.current_state == self.DANGER:
             return self.current_state
 
-        # Kiểm tra mất tập trung
-        distraction = self.is_distraction(
-            yaw,
-            eye_direction
-        )
+        # ==========================================
+        # 3. NEU KHONG TRUYEN ATTENTION
+        # SU DUNG LOGIC CU DE TUONG THICH
+        # ==========================================
 
-        if distraction:
+        if attention is None:
 
-            # Bắt đầu tính thời gian mất tập trung
-            if self.distraction_start_time is None:
-                self.distraction_start_time = time.time()
+            if self.is_distraction(yaw, eye_direction):
+                attention = self.FOCUS
+            else:
+                attention = self.SAFE
 
-            distraction_duration = (
-                time.time() - self.distraction_start_time
+        # ==========================================
+        # 4. XU LY UNKNOWN
+        # ==========================================
+
+        if attention == self.UNKNOWN:
+
+            self.focus_start_time = None
+
+            if self.unknown_start_time is None:
+                self.unknown_start_time = current_time
+
+            unknown_duration = (
+                current_time - self.unknown_start_time
             )
 
-            # Duy trì đủ lâu → FOCUS
-            if distraction_duration >= self.distraction_threshold:
-                self.current_state = self.FOCUS
+            if unknown_duration >= self.unknown_threshold:
+                attention = self.FOCUS
+            else:
+                self.current_state = self.UNKNOWN
+                return self.current_state
 
         else:
-            # Quay lại nhìn đường → reset bộ đếm
-            self.distraction_start_time = None
+            # Có dữ liệu trở lại
+            self.unknown_start_time = None
+
+        # ==========================================
+        # 5. XU LY MIRROR_CHECK
+        # ==========================================
+
+        if attention == self.MIRROR_CHECK:
+
+            # Nhìn gương hợp lệ không tính FOCUS
+            self.focus_start_time = None
+
             self.current_state = self.SAFE
+
+            return self.current_state
+
+        # ==========================================
+        # 6. XU LY FOCUS
+        # ==========================================
+
+        if attention == self.FOCUS:
+
+            if self.focus_start_time is None:
+                self.focus_start_time = current_time
+
+            focus_duration = (
+                current_time - self.focus_start_time
+            )
+
+            # FOCUS liên tục quá 3 giây
+            if focus_duration >= self.focus_danger_threshold:
+                self.current_state = self.DANGER
+                self.reset_timers()
+
+                return self.current_state
+
+            self.current_state = self.FOCUS
+
+            return self.current_state
+
+        # ==========================================
+        # 7. TRO LAI SAFE
+        # ==========================================
+
+        if attention == self.SAFE:
+
+            self.focus_start_time = None
+            self.unknown_start_time = None
+
+            self.current_state = self.SAFE
+
+            return self.current_state
+
+        # ==========================================
+        # 8. DU LIEU KHONG HOP LE
+        # ==========================================
+
+        self.current_state = self.UNKNOWN
 
         return self.current_state
 
+    # ==================================================
+    # RESET DANGER
+    # ==================================================
+
     def reset(self, yaw, eye_direction):
         """
-        Reset DANGER khi tài xế nhìn thẳng và nhấn nút reset.
+        Reset DANGER khi tài xế nhìn thẳng
+        và nhấn nút reset.
 
         Điều kiện:
-        - Đầu nhìn gần hướng thẳng
-        - Mắt nhìn CENTER
+        - Đầu gần hướng chính diện.
+        - Mắt nhìn CENTER.
         """
+
+        if yaw is None:
+            return False
 
         yaw_deviation = abs(yaw - self.center_yaw)
 
@@ -114,8 +240,11 @@ class StateManager:
         )
 
         if looking_forward:
+
             self.current_state = self.SAFE
-            self.distraction_start_time = None
+
+            self.reset_timers()
+
             return True
 
         return False
