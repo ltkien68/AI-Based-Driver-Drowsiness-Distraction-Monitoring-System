@@ -566,17 +566,47 @@ try:
                             "roll": roll
                         }
 
-                    mqtt_client.publish_metrics(
+                     # Gui chi so AI va ket qua phat hien gật đầu
+                    def publish_metrics(
+                        self,
                         ear,
-                        metrics_head_pose,
+                        head_pose,
                         eye_direction,
                         vertical_direction,
                         eye_state,
                         closed_duration,
-                        distraction_status
-                    )
+                        distraction_status,
+                        nod_detected=False,
+                        nod_count=0,
+                        reason=None
+                    ):
+                        data = {
+                            # Chi so mat
+                            "ear": ear,
+                            "eye_state": eye_state,
+                            "closed_duration": closed_duration,
 
-                    last_metrics_time = current_time
+                            # Huong mat
+                            "eye_direction": eye_direction,
+                            "vertical_direction": vertical_direction,
+
+                            # Tu the dau
+                            "head_pose": head_pose,
+
+                            # Phat hien mat tap trung
+                            "distraction_status": distraction_status,
+
+                            # Phat hien gat dau
+                            "nod_detected": nod_detected,
+                            "nod_count": nod_count,
+
+                            # Nguyen nhan trang thai
+                            "reason": reason,
+
+                            "timestamp": int(time.time())
+                        }
+
+                        self._publish(TOPIC_METRICS, data)
 
 
                 # ----------------------------------
