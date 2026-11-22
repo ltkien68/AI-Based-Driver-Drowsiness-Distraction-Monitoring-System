@@ -12,6 +12,7 @@ from drowsiness_detector import DrowsinessDetector
 from distraction_detector import DistractionDetector
 from state_manager import StateManager
 from mqtt_client import KSafeMQTTClient
+from nod_detector import NodDetector
 
 
 # ==========================================
@@ -83,6 +84,7 @@ mqtt_client.connect()
 
 drowsiness_detector = DrowsinessDetector()
 distraction_detector = DistractionDetector()
+nod_detector = NodDetector()
 state_manager = StateManager()
 
 
@@ -328,7 +330,10 @@ try:
 
                 # Mat lim cung chuyen sang FOCUS
                 if eye_state == "DROWSY":
-                    attention = state_manager.FOCUS
+                    attention = "FOCUS"
+
+                elif eye_state == "CLOSED" and closed_duration < 2.0:
+                    attention = "FOCUS"
 
 
                 # ----------------------------------
@@ -344,6 +349,23 @@ try:
                     pitch = head_pose["pitch"]
                     yaw = head_pose["yaw"]
                     roll = head_pose["roll"]
+
+                # ==========================================
+                # PHAT HIEN GAT DAU BUON NGU
+                # ==========================================
+
+                nod_detected = False
+
+                if pitch is not None:
+                    nod_detected = nod_detector.update(
+                        pitch,
+                        current_time
+                    )
+
+                # Neu phat hien cui dau roi giat len
+                # Chuyen attention sang FOCUS
+                if nod_detected:
+                    attention = state_manager.FOCUS
 
 
                 # ----------------------------------
@@ -406,6 +428,8 @@ try:
                             "Khong du du lieu huong dau"
                         )
 
+                    # Ket thuc yeu cau reset; khong xoa lich su theo doi gat dau
+                    # vi viec reset trang thai can doc lap voi bo phat hien gat dau.
                     reset_requested = False
 
 
@@ -480,12 +504,22 @@ try:
                     2
                 )
 
+                cv2.putText(
+                    frame,
+                    f"NOD: {'DETECTED' if nod_detected else 'NORMAL'}",
+                    (20, 440),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (0, 0, 255) if nod_detected else (0, 255, 0),
+                    2
+                )
+
                 if head_pose is not None:
 
                     cv2.putText(
                         frame,
                         f"Pitch: {pitch:.1f}",
-                        (20, 440),
+                        (20, 470),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.65,
                         (255, 255, 0),
@@ -495,7 +529,7 @@ try:
                     cv2.putText(
                         frame,
                         f"Roll: {roll:.1f}",
-                        (20, 470),
+                        (20, 500),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.65,
                         (255, 255, 0),
@@ -505,7 +539,7 @@ try:
                 cv2.putText(
                     frame,
                     f"FOCUS COUNT: {focus_count}/6",
-                    (20, 500),
+                    (20, 530),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.65,
                     (0, 255, 255),
@@ -622,6 +656,7 @@ try:
                 # Xoa lich su chuyen dong dau
                 # Khong xoa Pitch Calibration
                 distraction_detector.reset_tracking()
+                nod_detector.reset_tracking()
 
                 # Khong de thoi gian nham mat cu bi tinh tiep
                 drowsiness_detector.closed_start_time = None

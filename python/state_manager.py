@@ -16,7 +16,7 @@ class StateManager:
         # CAC NGUONG THOI GIAN
         # ==========================================
 
-        # Mat mat du lieu 1.5 giay -> FOCUS
+        # Mat khuon mat 1.5 giay -> FOCUS
         self.unknown_threshold = 1.5
 
         # FOCUS lien tuc 3 giay -> DANGER
@@ -29,8 +29,8 @@ class StateManager:
         # FOCUS FREQUENCY
         # ==========================================
 
-        # Pham vi theo doi 5 phut
-        self.focus_window = 5 * 60
+        # Cua so theo doi 10 phut
+        self.focus_window = 10 * 60
 
         # Lan FOCUS thu 6 -> DANGER
         self.focus_frequency_threshold = 6
@@ -38,7 +38,7 @@ class StateManager:
         # Luu thoi diem bat dau moi lan FOCUS
         self.focus_events = deque()
 
-        # Trang thai co dang trong mot lan FOCUS hay khong
+        # Danh dau dang trong mot lan FOCUS
         self.focus_active = False
 
         # ==========================================
@@ -48,15 +48,20 @@ class StateManager:
         self.unknown_start_time = None
         self.focus_start_time = None
 
+        # Danh dau UNKNOWN da chuyen thanh FOCUS
+        self.unknown_escalated = False
+
         # ==========================================
         # TRANG THAI HE THONG
         # ==========================================
 
         self.current_state = self.SAFE
 
-        # Bien tuong thich voi logic cu
+        # Nguong huong dau
         self.yaw_threshold = 20.0
         self.center_yaw = 2.0
+
+        # Bien tuong thich voi logic cu
         self.distraction_threshold = 2.0
         self.distraction_start_time = None
 
@@ -83,6 +88,10 @@ class StateManager:
 
     def get_focus_count(self):
         """Tra ve so lan FOCUS trong cua so hien tai."""
+
+        current_time = time.monotonic()
+
+        self.remove_expired_focus_events(current_time)
 
         return len(self.focus_events)
 
@@ -111,7 +120,17 @@ class StateManager:
         )
 
     # ==================================================
-    # KIEM TRA MAT TAP TRUNG CU
+    # KET THUC MOT LAN FOCUS
+    # ==================================================
+
+    def end_focus_event(self):
+        """Ket thuc lan FOCUS hien tai."""
+
+        self.focus_active = False
+        self.focus_start_time = None
+
+    # ==================================================
+    # KIEM TRA MAT TAP TRUNG
     # ==================================================
 
     def is_distraction(self, yaw, eye_direction):
@@ -155,18 +174,27 @@ class StateManager:
 
             self.current_state = self.DANGER
 
-            self.focus_start_time = None
+            self.end_focus_event()
+
             self.unknown_start_time = None
-            self.focus_active = False
+            self.unknown_escalated = False
+
+            print(
+                "[DANGER] EYES CLOSED: "
+                f"{closed_duration:.2f} giay"
+            )
 
             return self.current_state
 
-        # DANGER duoc giu cho den khi reset
+        # ==========================================
+        # 2. GIU DANGER CHO DEN KHI RESET
+        # ==========================================
+
         if self.current_state == self.DANGER:
             return self.current_state
 
         # ==========================================
-        # 2. TUONG THICH VOI LOGIC CU
+        # 3. TUONG THICH VOI LOGIC CU
         # ==========================================
 
         if attention is None:
@@ -178,62 +206,73 @@ class StateManager:
                 attention = self.SAFE
 
         # ==========================================
-        # 3. XU LY UNKNOWN
+        # 4. XU LY UNKNOWN
         # ==========================================
 
         if attention == self.UNKNOWN:
 
             if self.unknown_start_time is None:
+
                 self.unknown_start_time = current_time
+                self.unknown_escalated = False
 
             unknown_duration = (
                 current_time - self.unknown_start_time
             )
 
-            # UNKNOWN ket thuc mot lan FOCUS truoc do
-            self.focus_active = False
-            self.focus_start_time = None
+            # UNKNOWN chua du 1.5 giay
+            if (
+                unknown_duration < self.unknown_threshold
+                and not self.unknown_escalated
+            ):
 
-            if unknown_duration >= self.unknown_threshold:
-
-                # UNKNOWN keo dai -> FOCUS
-                attention = self.FOCUS
-
-            else:
+                self.end_focus_event()
 
                 self.current_state = self.UNKNOWN
 
                 return self.current_state
 
+            # UNKNOWN da keo dai du 1.5 giay
+            # Chi chuyen sang FOCUS mot lan
+            self.unknown_escalated = True
+
+            attention = self.FOCUS
+
         else:
 
+            # Ket thuc giai doan UNKNOWN
             self.unknown_start_time = None
+            self.unknown_escalated = False
 
         # ==========================================
-        # 4. XU LY MIRROR CHECK
+        # 5. XU LY MIRROR CHECK
         # ==========================================
 
         if attention == self.MIRROR_CHECK:
 
-            self.focus_start_time = None
-            self.distraction_start_time = None
+            self.end_focus_event()
 
-            self.focus_active = False
+            self.unknown_start_time = None
+            self.unknown_escalated = False
+
+            self.distraction_start_time = None
 
             self.current_state = self.SAFE
 
             return self.current_state
 
         # ==========================================
-        # 5. XU LY FOCUS
+        # 6. XU LY FOCUS
         # ==========================================
 
         if attention == self.FOCUS:
 
-            # Ghi nhan khi bat dau lan FOCUS moi
+            # Ghi nhan mot lan FOCUS moi
             self.record_focus_event(current_time)
 
+            # Bat dau tinh thoi gian FOCUS lien tuc
             if self.focus_start_time is None:
+
                 self.focus_start_time = current_time
 
             focus_duration = (
@@ -242,11 +281,13 @@ class StateManager:
 
             focus_count = self.get_focus_count()
 
-            # Dieu kien 1:
-            # FOCUS du 6 lan trong 10 phut
+            # --------------------------------------
+            # DIEU KIEN 1:
+            # FOCUS DU 6 LAN TRONG 10 PHUT
+            # --------------------------------------
+
             if (
-                focus_count
-                >= self.focus_frequency_threshold
+                focus_count >= self.focus_frequency_threshold
             ):
 
                 print(
@@ -258,11 +299,13 @@ class StateManager:
 
                 return self.current_state
 
-            # Dieu kien 2:
-            # FOCUS lien tuc 3 giay
+            # --------------------------------------
+            # DIEU KIEN 2:
+            # FOCUS LIEN TUC 3 GIAY
+            # --------------------------------------
+
             if (
-                focus_duration
-                >= self.focus_danger_threshold
+                focus_duration >= self.focus_danger_threshold
             ):
 
                 print(
@@ -279,16 +322,15 @@ class StateManager:
             return self.current_state
 
         # ==========================================
-        # 6. XU LY SAFE
+        # 7. XU LY SAFE
         # ==========================================
 
         if attention == self.SAFE:
 
-            self.focus_start_time = None
-            self.unknown_start_time = None
+            self.end_focus_event()
 
-            # Ket thuc lan FOCUS hien tai
-            self.focus_active = False
+            self.unknown_start_time = None
+            self.unknown_escalated = False
 
             self.distraction_start_time = None
 
@@ -297,8 +339,10 @@ class StateManager:
             return self.current_state
 
         # ==========================================
-        # 7. TRANG THAI KHONG HOP LE
+        # 8. TRANG THAI KHONG HOP LE
         # ==========================================
+
+        self.end_focus_event()
 
         self.current_state = self.UNKNOWN
 
@@ -314,6 +358,9 @@ class StateManager:
         Khong xoa lich su FOCUS trong 10 phut.
         """
 
+        if self.current_state != self.DANGER:
+            return False
+
         if yaw is None:
             return False
 
@@ -328,12 +375,12 @@ class StateManager:
 
             self.current_state = self.SAFE
 
-            self.focus_start_time = None
+            self.end_focus_event()
+
             self.unknown_start_time = None
+            self.unknown_escalated = False
 
             self.distraction_start_time = None
-
-            self.focus_active = False
 
             print(
                 "[SYSTEM] Reset thanh cong. "
