@@ -248,10 +248,7 @@ try:
 
                 last_heartbeat_time = current_time
 
-
-            # Neu MQTT ket noi lai,
-            # cho phep gui lai trang thai hien tai
-
+            # Cho phep gui lai trang thai khi MQTT ket noi lai
             if not mqtt_client.da_ket_noi:
 
                 last_mqtt_state = None
@@ -314,17 +311,28 @@ try:
                 )
 
                 attention = attention_result["attention"]
-                # Mat lim duong cung duoc xem la mat tap trung kem
-                if eye_state == "DROWSY":
-                    attention = "FOCUS"
+
+                # Luu ket qua goc cua DistractionDetector
+                distraction_status = attention
 
                 eye_direction = attention_result["eye_direction"]
+
+                vertical_direction = attention_result["vertical_direction"]
 
                 head_pose = attention_result["head_pose"]
 
 
                 # ----------------------------------
-                # 5.3. LAY CAC GOC DAU
+                # 5.3. XU LY TRANG THAI MAT
+                # ----------------------------------
+
+                # Mat lim cung chuyen sang FOCUS
+                if eye_state == "DROWSY":
+                    attention = state_manager.FOCUS
+
+
+                # ----------------------------------
+                # 5.4. LAY CAC GOC DAU
                 # ----------------------------------
 
                 pitch = None
@@ -339,9 +347,10 @@ try:
 
 
                 # ----------------------------------
-                # 5.4. CAP NHAT STATE MANAGER
+                # 5.5. CAP NHAT STATE MANAGER
                 # ----------------------------------
 
+                # Chi goi update mot lan moi frame
                 system_state = state_manager.update(
                     eye_state,
                     closed_duration,
@@ -352,7 +361,7 @@ try:
 
 
                 # ----------------------------------
-                # 5.5. XU LY NUT RESET
+                # 5.6. XU LY NUT RESET
                 # ----------------------------------
 
                 if reset_requested:
@@ -373,10 +382,14 @@ try:
                                 "[SYSTEM] Reset thanh cong - SAFE"
                             )
 
+                            # Cap nhat trang thai ngay sau reset
+                            system_state = state_manager.current_state
+
                         else:
 
                             print(
-                                "[SYSTEM] Reset that bai - Hay nhin thang"
+                                "[SYSTEM] Reset that bai - "
+                                "Hay nhin thang vao camera"
                             )
 
                     elif system_state != state_manager.DANGER:
@@ -397,8 +410,35 @@ try:
 
 
                 # ----------------------------------
-                # 5.6. HIEN THI THONG SO AI
+                # 5.7. LAY SO LAN FOCUS
                 # ----------------------------------
+
+                focus_count = state_manager.get_focus_count()
+
+
+                # ----------------------------------
+                # 5.8. HIEN THI THONG SO AI
+                # ----------------------------------
+
+                cv2.putText(
+                    frame,
+                    f"Yaw: {yaw:.1f}" if yaw is not None else "Yaw: N/A",
+                    (20, 240),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (255, 255, 0),
+                    2
+                )
+
+                cv2.putText(
+                    frame,
+                    f"LOOK: {eye_direction}",
+                    (20, 280),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (255, 255, 0),
+                    2
+                )
 
                 cv2.putText(
                     frame,
@@ -422,8 +462,8 @@ try:
 
                 cv2.putText(
                     frame,
-                    f"LOOK: {eye_direction}",
-                    (20, 280),
+                    f"VERTICAL: {vertical_direction}",
+                    (20, 380),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.65,
                     (255, 255, 0),
@@ -433,7 +473,7 @@ try:
                 cv2.putText(
                     frame,
                     f"ATTENTION: {attention}",
-                    (20, 390),
+                    (20, 410),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.65,
                     (255, 255, 0),
@@ -445,17 +485,7 @@ try:
                     cv2.putText(
                         frame,
                         f"Pitch: {pitch:.1f}",
-                        (20, 420),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.65,
-                        (255, 255, 0),
-                        2
-                    )
-
-                    cv2.putText(
-                        frame,
-                        f"Yaw: {yaw:.1f}",
-                        (20, 240),
+                        (20, 440),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.65,
                         (255, 255, 0),
@@ -465,16 +495,26 @@ try:
                     cv2.putText(
                         frame,
                         f"Roll: {roll:.1f}",
-                        (20, 450),
+                        (20, 470),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.65,
                         (255, 255, 0),
                         2
                     )
 
+                cv2.putText(
+                    frame,
+                    f"FOCUS COUNT: {focus_count}/6",
+                    (20, 500),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.65,
+                    (0, 255, 255),
+                    2
+                )
+
 
                 # ----------------------------------
-                # 5.7. MQTT METRICS
+                # 5.9. MQTT METRICS
                 # ----------------------------------
 
                 if (
@@ -495,28 +535,32 @@ try:
                     mqtt_client.publish_metrics(
                         ear,
                         metrics_head_pose,
-                        eye_direction
+                        eye_direction,
+                        vertical_direction,
+                        eye_state,
+                        closed_duration,
+                        distraction_status
                     )
 
                     last_metrics_time = current_time
 
 
                 # ----------------------------------
-                # 5.8. MQTT STATE
+                # 5.10. MQTT STATE
                 # ----------------------------------
 
                 publish_mqtt_state(system_state)
 
 
                 # ----------------------------------
-                # 5.9. GUI LENH ARDUINO
+                # 5.11. GUI LENH ARDUINO
                 # ----------------------------------
 
                 send_arduino_command(system_state)
 
 
                 # ----------------------------------
-                # 5.10. HIEN THI TRANG THAI HE THONG
+                # 5.12. HIEN THI TRANG THAI HE THONG
                 # ----------------------------------
 
                 state_text, state_color = get_state_display(
@@ -547,7 +591,7 @@ try:
 
 
                 # ----------------------------------
-                # 5.11. VE LANDMARK
+                # 5.13. VE LANDMARK
                 # ----------------------------------
 
                 for landmark in face:
@@ -576,13 +620,14 @@ try:
             else:
 
                 # Xoa lich su chuyen dong dau
+                # Khong xoa Pitch Calibration
                 distraction_detector.reset_tracking()
 
                 # Khong de thoi gian nham mat cu bi tinh tiep
                 drowsiness_detector.closed_start_time = None
 
                 # Cap nhat UNKNOWN vao StateManager
-                # De bat dau bo dem UNKNOWN 1.5 giay
+                # UNKNOWN sau 1.5 giay se chuyen FOCUS
 
                 system_state = state_manager.update(
                     "UNKNOWN",
@@ -592,16 +637,14 @@ try:
                     attention=state_manager.UNKNOWN
                 )
 
-                # Khong cho phep reset khi khong co khuon mat
                 reset_requested = False
 
-                # Gui trang thai len MQTT
+                focus_count = state_manager.get_focus_count()
+
                 publish_mqtt_state(system_state)
 
-                # Gui lenh Arduino neu UNKNOWN da chuyen FOCUS
                 send_arduino_command(system_state)
 
-                # Hien thi thong bao
                 cv2.putText(
                     frame,
                     "NO FACE DETECTED",
@@ -623,6 +666,16 @@ try:
                     cv2.FONT_HERSHEY_SIMPLEX,
                     1,
                     state_color,
+                    2
+                )
+
+                cv2.putText(
+                    frame,
+                    f"FOCUS COUNT: {focus_count}/6",
+                    (20, 140),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 255),
                     2
                 )
 

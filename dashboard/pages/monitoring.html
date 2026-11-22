@@ -1,105 +1,160 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Live Monitoring · KSafe AI</title>
-  <meta name="description" content="Real-time camera, EAR, head pose and gaze monitoring">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="../assets/css/variables.css">
-  <link rel="stylesheet" href="../assets/css/style.css">
-  <link rel="stylesheet" href="../assets/css/dashboard.css">
-  <link rel="stylesheet" href="../assets/css/pages.css">
-  <link rel="stylesheet" href="../assets/css/responsive.css">
-</head>
-<body data-page="monitoring" data-title="Live Monitoring" data-base="../">
-
-  <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
-  <main id="page">
-
-    <div class="page-head">
-      <div>
-        <h2>Live Monitoring</h2>
-        <p>Camera feed and real-time measurements from the Python AI service (OpenCV + MediaPipe).</p>
-      </div>
-      <div class="card__actions">
-        <span data-source-tag></span>
-        <button class="btn btn--sm" type="button" id="btn-pause" aria-pressed="false"><i data-icon="pause" data-size="14"></i><span>Pause charts</span></button>
-        <button class="btn btn--sm" type="button" id="btn-clear"><i data-icon="rotate-ccw" data-size="14"></i>Clear history</button>
-      </div>
-    </div>
-
-    <section class="mon-grid">
-      <article class="card">
-        <div class="card__header">
-          <h3 class="card__title"><i data-icon="video" data-size="18"></i>Camera View</h3>
-          <div class="card__actions"><a class="btn btn--sm" href="settings.html"><i data-icon="settings" data-size="14"></i>Camera settings</a></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Live Monitoring · KSafe AI</title>
+    <meta
+      name="description"
+      content="Real-time camera, EAR, head pose and gaze monitoring"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563EB'/%3E%3Cpath d='M16 7l7 2.5v6c0 4.6-3 7.6-7 9-4-1.4-7-4.4-7-9v-6z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M13 16l2.2 2.2L19.5 14' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="../assets/css/variables.css" />
+    <link rel="stylesheet" href="../assets/css/style.css" />
+    <link rel="stylesheet" href="../assets/css/dashboard.css" />
+    <link rel="stylesheet" href="../assets/css/pages.css" />
+    <link rel="stylesheet" href="../assets/css/responsive.css" />
+  </head>
+  <body data-page="monitoring" data-title="Live Monitoring" data-base="../">
+    <!-- Khung (sidebar/header) được chèn bởi assets/js/components.js; nội dung trang nằm trong #page -->
+    <main id="page">
+      <div class="page-head">
+        <div>
+          <h2>Live Monitoring</h2>
+          <p>
+            Camera feed and real-time measurements from the Python AI service
+            (OpenCV + MediaPipe).
+          </p>
         </div>
-        <div class="card__body"><div id="camera"></div></div>
-      </article>
+        <div class="card__actions">
+          <span data-source-tag></span>
+          <button
+            class="btn btn--sm"
+            type="button"
+            id="btn-pause"
+            aria-pressed="false"
+          >
+            <i data-icon="pause" data-size="14"></i><span>Pause charts</span>
+          </button>
+          <button class="btn btn--sm" type="button" id="btn-clear">
+            <i data-icon="rotate-ccw" data-size="14"></i>Clear history
+          </button>
+        </div>
+      </div>
 
-      <div class="mon-side">
-        <article id="safety" aria-label="Driver safety status"></article>
-        <article class="card" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-          <div id="metrics"></div>
+      <section class="mon-grid">
+        <article class="card">
+          <div class="card__header">
+            <h3 class="card__title">
+              <i data-icon="video" data-size="18"></i>Camera View
+            </h3>
+            <div class="card__actions">
+              <a class="btn btn--sm" href="settings.html"
+                ><i data-icon="settings" data-size="14"></i>Camera settings</a
+              >
+            </div>
+          </div>
+          <div class="card__body"><div id="camera"></div></div>
         </article>
-      </div>
-    </section>
 
-    <section class="mon-charts">
-      <article class="card">
-        <div class="card__header">
-          <h3 class="card__title"><i data-icon="eye" data-size="18"></i>EAR Monitoring</h3>
-          <div class="card__actions"><span class="card__sub">last 60 samples</span></div>
+        <div class="mon-side">
+          <article id="safety" aria-label="Driver safety status"></article>
+          <article
+            class="card"
+            style="
+              flex: 1;
+              display: flex;
+              flex-direction: column;
+              overflow: hidden;
+            "
+          >
+            <div id="metrics"></div>
+          </article>
         </div>
-        <div class="card__body">
-          <div class="chart-readout"><strong id="ear-now">—</strong><span>ratio</span><span id="ear-badge" class="badge badge--off">No data</span></div>
-          <div id="chart-ear"></div>
-        </div>
-      </article>
+      </section>
 
-      <article class="card">
-        <div class="card__header">
-          <h3 class="card__title"><i data-icon="gauge" data-size="18"></i>Head Pose Monitoring</h3>
-          <div class="card__actions"><span class="card__sub">degrees</span></div>
-        </div>
-        <div class="card__body">
-          <div class="pose-legend" id="pose-legend">
-            <span><i style="background:#2563EB"></i>Pitch <b data-v="pitch">—</b></span>
-            <span><i style="background:#0F172A"></i>Yaw <b data-v="yaw">—</b></span>
-            <span><i style="background:#94A3B8"></i>Roll <b data-v="roll">—</b></span>
+      <section class="mon-charts">
+        <article class="card">
+          <div class="card__header">
+            <h3 class="card__title">
+              <i data-icon="eye" data-size="18"></i>EAR Monitoring
+            </h3>
+            <div class="card__actions">
+              <span class="card__sub">last 60 samples</span>
+            </div>
           </div>
-          <div id="chart-pose"></div>
-        </div>
-      </article>
-
-      <article class="card" id="gaze-card" data-state="UNKNOWN">
-        <div class="card__header">
-          <h3 class="card__title"><i data-icon="scan-face" data-size="18"></i>Eye Gaze Monitoring</h3>
-          <div class="card__actions"><span class="badge badge--off" id="gaze-badge">No data</span></div>
-        </div>
-        <div class="card__body">
-          <div class="gaze-pad" aria-label="Gaze direction indicator">
-            <span class="gaze-pad__lbl gaze-pad__lbl--t">UP</span><span class="gaze-pad__lbl gaze-pad__lbl--b">DOWN</span>
-            <span class="gaze-pad__lbl gaze-pad__lbl--l">LEFT</span><span class="gaze-pad__lbl gaze-pad__lbl--r">RIGHT</span>
-            <div class="gaze-pad__dot" id="gaze-dot" hidden></div>
+          <div class="card__body">
+            <div class="chart-readout">
+              <strong id="ear-now">—</strong><span>ratio</span
+              ><span id="ear-badge" class="badge badge--off">No data</span>
+            </div>
+            <div id="chart-ear"></div>
           </div>
-          <div class="dist" id="gaze-dist"></div>
-        </div>
-      </article>
-    </section>
+        </article>
 
-  </main>
+        <article class="card">
+          <div class="card__header">
+            <h3 class="card__title">
+              <i data-icon="gauge" data-size="18"></i>Head Pose Monitoring
+            </h3>
+            <div class="card__actions">
+              <span class="card__sub">degrees</span>
+            </div>
+          </div>
+          <div class="card__body">
+            <div class="pose-legend" id="pose-legend">
+              <span
+                ><i style="background: #2563eb"></i>Pitch
+                <b data-v="pitch">—</b></span
+              >
+              <span
+                ><i style="background: #0f172a"></i>Yaw
+                <b data-v="yaw">—</b></span
+              >
+              <span
+                ><i style="background: #94a3b8"></i>Roll
+                <b data-v="roll">—</b></span
+              >
+            </div>
+            <div id="chart-pose"></div>
+          </div>
+        </article>
 
-  <script src="../assets/js/icons.js"></script>
-  <script src="../assets/js/i18n.js"></script>
-  <script src="../assets/js/lang/vi.js"></script>
-  <script src="../assets/js/api.js"></script>
-  <script src="../assets/js/charts.js"></script>
-  <script src="../assets/js/components.js"></script>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-  <script src="../assets/js/mqtt.js"></script>
-  <script src="../assets/js/main.js"></script>
-  <script src="../assets/js/monitoring.js"></script>
-</body>
+        <article class="card" id="gaze-card" data-state="UNKNOWN">
+          <div class="card__header">
+            <h3 class="card__title">
+              <i data-icon="scan-face" data-size="18"></i>Eye Gaze Monitoring
+            </h3>
+            <div class="card__actions">
+              <span class="badge badge--off" id="gaze-badge">No data</span>
+            </div>
+          </div>
+          <div class="card__body">
+            <div class="gaze-pad" aria-label="Gaze direction indicator">
+              <span class="gaze-pad__lbl gaze-pad__lbl--t">UP</span
+              ><span class="gaze-pad__lbl gaze-pad__lbl--b">DOWN</span>
+              <span class="gaze-pad__lbl gaze-pad__lbl--l">LEFT</span
+              ><span class="gaze-pad__lbl gaze-pad__lbl--r">RIGHT</span>
+              <div class="gaze-pad__dot" id="gaze-dot" hidden></div>
+            </div>
+            <div class="dist" id="gaze-dist"></div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="../assets/js/icons.js"></script>
+    <script src="../assets/js/i18n.js"></script>
+    <script src="../assets/js/lang/vi.js"></script>
+    <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/charts.js"></script>
+    <script src="../assets/js/components.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="../assets/js/mqtt.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/monitoring.js"></script>
+  </body>
 </html>

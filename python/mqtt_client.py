@@ -143,11 +143,29 @@ class KSafeMQTTClient:
         self._publish(TOPIC_STATE, state)
 
     # Gui chi so AI
-    def publish_metrics(self, ear, head_pose, eye_direction):
+    def publish_metrics(
+        self,
+        ear,
+        head_pose,
+        eye_direction,
+        vertical_direction,
+        eye_state,
+        closed_duration,
+        distraction_status
+    ):
         data = {
             "ear": ear,
             "head_pose": head_pose,
             "eye_direction": eye_direction,
+            "vertical_direction": vertical_direction,
+
+            # Ket qua tu DrowsinessDetector
+            "eye_state": eye_state,
+            "closed_duration": closed_duration,
+
+            # Ket qua tu DistractionDetector
+            "distraction_status": distraction_status,
+
             "timestamp": int(time.time())
         }
 
